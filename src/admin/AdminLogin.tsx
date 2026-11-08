@@ -72,7 +72,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
           {!isBackendConnected && (
             <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs font-['Sarabun']">
-              <strong>หมายเหตุ:</strong> ระบบยังไม่ได้เชื่อมต่อ Cloudflare Worker API สามารถเข้าสู่ระบบในโหมดตัวอย่าง (Preview Mode) เพื่อทดลองแก้ไขและจัดเตรียมข้อมูลได้
+              <strong>หมายเหตุ:</strong> ระบบยังไม่ได้เชื่อมต่อ Google Apps Script Web App สามารถเข้าสู่ระบบในโหมดตัวอย่าง (Preview Mode) เพื่อทดลองแก้ไขและจัดเตรียมข้อมูลได้
             </div>
           )}
 

@@ -133,13 +133,13 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <div className="font-['Prompt'] font-semibold text-amber-950">
-              สถานะ: รอการตั้งค่า Cloudflare Worker Backend API
+              สถานะ: รอการตั้งค่า Google Apps Script Web App URL
             </div>
             <p>
-              ระบบการดาวน์โหลดเกียรติบัตรจะอ่านค่าระดับเหรียญจากคอลัมน์ E และลิงก์ไฟล์เกียรติบัตรจากคอลัมน์ F ของแผ่นงาน &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot; โดยตรงผ่าน API Gateway
+              ระบบการดาวน์โหลดเกียรติบัตรจะอ่านค่าระดับเหรียญจากคอลัมน์ E และลิงก์ไฟล์เกียรติบัตรจากคอลัมน์ F ของแผ่นงาน &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot; โดยตรงผ่าน Google Apps Script (Code.gs)
             </p>
             <p className="text-amber-800 text-[11px] pt-1">
-              ผู้ดูแลระบบสามารถระบุ Backend URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong>
+              ผู้ดูแลระบบสามารถระบุ Web App URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong>
             </p>
           </div>
         </div>

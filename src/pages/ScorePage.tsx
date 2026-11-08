@@ -107,13 +107,13 @@ export const ScorePage: React.FC<ScorePageProps> = ({
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <div className="font-['Prompt'] font-semibold text-amber-950">
-              สถานะ: ยังไม่ได้เชื่อมต่อ Cloudflare Worker API Gateway
+              สถานะ: ยังไม่ได้เชื่อมต่อ Google Apps Script Web App
             </div>
             <p>
-              ระบบการค้นหาจริงต้องเชื่อมต่อกับ Google Sheets ID: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">{APP_CONFIG.SPREADSHEET_ID}</code> ผ่าน Cloudflare Worker Backend ตามข้อกำหนดความปลอดภัย (ห้ามฝัง Service Account Key ไว้ใน Frontend)
+              ระบบการค้นหาจริงเชื่อมต่อกับ Google Sheets ID: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">{APP_CONFIG.SPREADSHEET_ID}</code> ผ่าน Google Apps Script Web App (Code.gs) ด้วยคำสั่ง <code>SpreadsheetApp.openById()</code> โดยตรง
             </p>
             <p className="text-amber-800 text-[11px] pt-1">
-              แอดมินสามารถกำหนด Backend URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong> หรือดูคู่มือการตั้งค่าใน <code>docs/BACKEND.md</code>
+              แอดมินสามารถกำหนด Web App URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong> หรือดูคู่มือการตั้งค่าใน <code>docs/GOOGLE_APPS_SCRIPT.md</code>
             </p>
           </div>
         </div>

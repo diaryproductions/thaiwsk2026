@@ -2,7 +2,7 @@
 ### ระบบสืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย
 **กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"**
 
-เว็บไซต์โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ประจำปีการศึกษา ๒๕๖๙ ออกแบบด้วย Design System ร่วมสมัย โทนสีม่วงรอยัล-ทองคำสง่างาม (Deep Purple & Elegant Gold) พัฒนาเพื่อเผยแพร่ผ่าน GitHub Pages เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API Gateway
+เว็บไซต์โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ประจำปีการศึกษา ๒๕๖๙ ออกแบบด้วย Design System ร่วมสมัย โทนสีม่วงรอยัล-ทองคำสง่างาม (Deep Purple & Elegant Gold) พัฒนาเพื่อเผยแพร่ผ่าน GitHub Pages เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Google Apps Script Web App (Code.gs) ด้วยคำสั่ง `SpreadsheetApp.openById()` โดยตรง
 
 ---
 
@@ -36,8 +36,9 @@
 6. **คู่มือฉบับสมบูรณ์ในโฟลเดอร์ `/docs/`:**
    - `docs/SETUP.md`
    - `docs/DATABASE.md`
-   - `docs/BACKEND.md`
+   - `docs/GOOGLE_APPS_SCRIPT.md`
    - `docs/GITHUB_PAGES.md`
+   - `Code.gs` (โค้ดสำหรับนำไปวางใน Google Apps Script ของสเปรดชีต)
 
 ---
 

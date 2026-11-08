@@ -1,6 +1,7 @@
 /**
  * API Service for THAI WSK 2026
- * Handles communication with Cloudflare Worker Backend & Google Sheets Data Processing
+ * Handles communication with Google Apps Script Web App Connector & Google Sheets Data Processing
+ * Spreadsheet ID: 1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI
  */
 
 import { APP_CONFIG, THAI_NAME_PREFIXES } from '../config/constants';
@@ -39,29 +40,35 @@ export interface SearchResponse<T> {
   isBackendConnected: boolean;
 }
 
-// Storage key for custom backend URL configured via Admin UI
-const BACKEND_URL_STORAGE_KEY = 'thai_wsk_backend_url';
+// Storage keys for custom Google Apps Script Web App URL
+const GAS_URL_STORAGE_KEY = 'thai_wsk_gas_url';
 const ADMIN_TOKEN_KEY = 'thai_wsk_admin_token';
 
 export function getApiBaseUrl(): string {
-  // 1. Check runtime environment variable
+  // 1. Check runtime environment variables
+  const envGasUrl = import.meta.env.VITE_GAS_URL;
+  if (envGasUrl && typeof envGasUrl === 'string' && envGasUrl.trim() !== '') {
+    return envGasUrl.trim();
+  }
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
-    return envUrl.trim().replace(/\/+$/, '');
+    return envUrl.trim();
   }
   // 2. Check localStorage override (configured via Admin Settings)
-  const savedUrl = localStorage.getItem(BACKEND_URL_STORAGE_KEY);
+  const savedUrl = localStorage.getItem(GAS_URL_STORAGE_KEY) || localStorage.getItem('thai_wsk_backend_url');
   if (savedUrl && savedUrl.trim() !== '') {
-    return savedUrl.trim().replace(/\/+$/, '');
+    return savedUrl.trim();
   }
   return '';
 }
 
 export function setApiBaseUrl(url: string): void {
   if (!url || url.trim() === '') {
-    localStorage.removeItem(BACKEND_URL_STORAGE_KEY);
+    localStorage.removeItem(GAS_URL_STORAGE_KEY);
+    localStorage.removeItem('thai_wsk_backend_url');
   } else {
-    localStorage.setItem(BACKEND_URL_STORAGE_KEY, url.trim().replace(/\/+$/, ''));
+    localStorage.setItem(GAS_URL_STORAGE_KEY, url.trim());
+    localStorage.setItem('thai_wsk_backend_url', url.trim());
   }
 }
 
@@ -78,10 +85,7 @@ export function setAdminToken(token: string | null): void {
 }
 
 /**
- * Normalizes Thai name strings for search matching:
- * - Trims whitespace
- * - Collapses consecutive spaces
- * - Strips common Thai title prefixes (นาย, นางสาว, เด็กชาย, etc.)
+ * Normalizes Thai name strings for search matching
  */
 export function normalizeThaiName(input: string): { normalized: string; strippedPrefix: string } {
   if (!input) return { normalized: '', strippedPrefix: '' };
@@ -119,12 +123,10 @@ export function resolveCertificateUrl(rawUrl: string): {
 
   let cleanUrl = rawUrl.trim();
 
-  // If the cell contains an Excel / Google Sheets formula like =HYPERLINK("https://...", "ดาวน์โหลด")
   const formulaMatch = cleanUrl.match(/HYPERLINK\(\s*["'](https?:\/\/[^"']+)["']/i);
   if (formulaMatch && formulaMatch[1]) {
     cleanUrl = formulaMatch[1];
   } else {
-    // If text contains a URL inside
     const urlMatch = cleanUrl.match(/https?:\/\/[^\s"'<>]+/);
     if (urlMatch) {
       cleanUrl = urlMatch[0];
@@ -135,7 +137,6 @@ export function resolveCertificateUrl(rawUrl: string): {
     return { original: rawUrl, previewUrl: '', downloadUrl: '', isDrive: false, isValid: false };
   }
 
-  // Check if Google Drive link
   const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   const driveId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
@@ -160,7 +161,7 @@ export function resolveCertificateUrl(rawUrl: string): {
 }
 
 /**
- * Check backend health status
+ * Check Google Apps Script Web App health status
  */
 export async function checkBackendHealth(): Promise<{
   connected: boolean;
@@ -171,37 +172,49 @@ export async function checkBackendHealth(): Promise<{
   if (!baseUrl) {
     return {
       connected: false,
-      message: 'ยังไม่ได้ระบุ Backend URL (Cloudflare Worker)',
+      message: 'ยังไม่ได้ระบุ URL ของ Google Apps Script Web App',
     };
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/health`, {
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const targetUrl = `${baseUrl}${separator}action=health&t=${Date.now()}`;
+    const res = await fetch(targetUrl, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      redirect: 'follow',
     });
+
     if (!res.ok) {
       return {
         connected: false,
-        message: `เชื่อมต่อเซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: HTTP ${res.status}`,
+        message: `Google Apps Script ตอบกลับรหัสข้อผิดพลาด: HTTP ${res.status}`,
       };
     }
+
     const data = await res.json();
+    if (data && data.status === 'ok') {
+      return {
+        connected: true,
+        message: 'เชื่อมต่อ Google Apps Script และ Google Sheets สำเร็จเรียบร้อย',
+        data,
+      };
+    }
+
     return {
-      connected: true,
-      message: 'เชื่อมต่อ Cloudflare Worker API และ Google Sheets สำเร็จ',
+      connected: false,
+      message: data?.message || 'ไม่สามารถยืนยันสถานะการเชื่อมต่อสเปรดชีตได้',
       data,
     };
   } catch (err: any) {
     return {
       connected: false,
-      message: `ไม่สามารถเชื่อมต่อ Backend API: ${err?.message || 'Network error'}`,
+      message: `ไม่สามารถเชื่อมต่อ Google Apps Script Web App: ${err?.message || 'Network error'}`,
     };
   }
 }
 
 /**
- * Search score in sheet 'ตรวจสอบคะแนน'
+ * Search score in sheet 'ตรวจสอบคะแนน' via Google Apps Script
  */
 export async function searchScore(params: {
   query: string;
@@ -214,15 +227,21 @@ export async function searchScore(params: {
     return {
       success: false,
       isBackendConnected: false,
-      message: 'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API Gateway (กรุณาตั้งค่าในแอดมินหรือดูเอกสาร docs/BACKEND.md)',
+      message: 'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Google Apps Script Web App (กรุณาตั้งค่า URL ในระบบแอดมินหรือดูคู่มือ docs/GOOGLE_APPS_SCRIPT.md)',
     };
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/search-score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+    const url = new URL(baseUrl);
+    url.searchParams.set('action', 'searchScore');
+    url.searchParams.set('query', params.query);
+    if (params.grade) url.searchParams.set('grade', params.grade);
+    if (params.room) url.searchParams.set('room', params.room);
+    url.searchParams.set('_t', Date.now().toString());
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
     });
 
     const data = await res.json();
@@ -234,13 +253,13 @@ export async function searchScore(params: {
     return {
       success: false,
       isBackendConnected: false,
-      message: `เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ${err?.message || 'Network Error'}`,
+      message: `เกิดข้อผิดพลาดในการเชื่อมต่อ Google Apps Script: ${err?.message || 'Network Error'}`,
     };
   }
 }
 
 /**
- * Search certificate in sheet 'ดาวน์โหลดเกียรติบัตร'
+ * Search certificate in sheet 'ดาวน์โหลดเกียรติบัตร' via Google Apps Script
  */
 export async function searchCertificate(params: {
   query: string;
@@ -253,15 +272,21 @@ export async function searchCertificate(params: {
     return {
       success: false,
       isBackendConnected: false,
-      message: 'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API Gateway',
+      message: 'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Google Apps Script Web App',
     };
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/search-certificate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+    const url = new URL(baseUrl);
+    url.searchParams.set('action', 'searchCertificate');
+    url.searchParams.set('query', params.query);
+    if (params.grade) url.searchParams.set('grade', params.grade);
+    if (params.room) url.searchParams.set('room', params.room);
+    url.searchParams.set('_t', Date.now().toString());
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
     });
 
     const data = await res.json();
@@ -273,13 +298,13 @@ export async function searchCertificate(params: {
     return {
       success: false,
       isBackendConnected: false,
-      message: `เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ${err?.message || 'Network Error'}`,
+      message: `เกิดข้อผิดพลาดในการเชื่อมต่อ Google Apps Script: ${err?.message || 'Network Error'}`,
     };
   }
 }
 
 /**
- * Fetch dynamic CMS content from Cloudflare Worker / Google Sheets H:O
+ * Fetch dynamic CMS content from Google Apps Script / Google Sheets H:O
  */
 export async function fetchSiteContent(): Promise<{
   success: boolean;
@@ -292,14 +317,16 @@ export async function fetchSiteContent(): Promise<{
     return {
       success: true,
       isFromBackend: false,
-      message: 'ใช้ข้อมูลค่าเริ่มต้น (ยังไม่ได้ระบุ Backend URL)',
+      message: 'ใช้ข้อมูลค่าเริ่มต้น (ยังไม่ได้ระบุ Google Apps Script URL)',
     };
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/site-content`, {
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const targetUrl = `${baseUrl}${separator}action=getContent&_t=${Date.now()}`;
+    const res = await fetch(targetUrl, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      redirect: 'follow',
     });
 
     if (res.ok) {
@@ -315,7 +342,7 @@ export async function fetchSiteContent(): Promise<{
     return {
       success: false,
       isFromBackend: false,
-      message: `HTTP ${res.status}: ไม่สามารถดึงข้อมูล CMS จาก Backend`,
+      message: `ไม่พบข้อมูล CMS จาก Google Apps Script (HTTP ${res.status})`,
     };
   } catch (err: any) {
     return {
@@ -327,7 +354,7 @@ export async function fetchSiteContent(): Promise<{
 }
 
 /**
- * Save CMS content to Google Sheets via Cloudflare Worker
+ * Save CMS content to Google Sheets via Google Apps Script (Columns H:O)
  */
 export async function saveSiteContent(content: SiteContent): Promise<{
   success: boolean;
@@ -339,7 +366,7 @@ export async function saveSiteContent(content: SiteContent): Promise<{
   if (!baseUrl) {
     return {
       success: false,
-      message: 'ยังไม่ได้กำหนด Backend API URL ไม่สามารถบันทึกลง Google Sheets ได้',
+      message: 'ยังไม่ได้กำหนด Google Apps Script Web App URL ไม่สามารถบันทึกลง Google Sheets ได้',
     };
   }
 
@@ -351,13 +378,20 @@ export async function saveSiteContent(content: SiteContent): Promise<{
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/content`, {
-      method: 'PUT',
+    // Send as text/plain to avoid CORS preflight OPTIONS which GAS doesn't handle
+    const payload = JSON.stringify({
+      action: 'saveContent',
+      token,
+      content,
+    });
+
+    const res = await fetch(baseUrl, {
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify({ content }),
+      body: payload,
+      redirect: 'follow',
     });
 
     const data = await res.json();
@@ -370,7 +404,7 @@ export async function saveSiteContent(content: SiteContent): Promise<{
 
     return {
       success: true,
-      message: data.message || 'บันทึกข้อมูลลง Google Sheets สำเร็จ และอัปเดตทุกอุปกรณ์แล้ว',
+      message: data.message || 'บันทึกข้อมูลลง Google Sheets สำเร็จเรียบร้อยแล้ว',
     };
   } catch (err: any) {
     return {
@@ -410,10 +444,19 @@ export async function adminLogin(credentials: {
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/login`, {
+    const payload = JSON.stringify({
+      action: 'adminLogin',
+      username: credentials.username,
+      passwordHashOrSecret: credentials.passwordHashOrSecret,
+    });
+
+    const res = await fetch(baseUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: payload,
+      redirect: 'follow',
     });
 
     const data = await res.json();

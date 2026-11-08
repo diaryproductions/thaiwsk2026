@@ -8,17 +8,15 @@
 ## 1. การตั้งค่า Base Path ใน Vite
 ในไฟล์ `vite.config.ts` ได้กำหนดค่า:
 ```typescript
-const base = process.env.GITHUB_ACTIONS ? '/thai-wsk-2026/' : (process.env.VITE_BASE_PATH || './');
+base: '/thaiwsk2026/',
 ```
-สิ่งนี้รับประกันว่า:
-- ในคอมพิวเตอร์และ Google AI Studio Preview: แอสรันที่ Root Path หรือ Relative Path อย่างถูกต้อง
-- ใน GitHub Actions: เมื่อสั่ง Build จะสร้าง Asset Links ที่ขึ้นต้นด้วย `/thai-wsk-2026/` ให้ตรงกับชื่อ Repository บน GitHub Pages เสมอ
+สิ่งนี้รับประกันว่าเมื่อ Deploy ไปยัง GitHub Pages จะสามารถโหลด Asset ทุกไฟล์ได้อย่างถูกต้อง
 
 ---
 
 ## 2. โครงสร้าง URL บน GitHub Pages
-เมื่อ Repository ของคุณชื่อ `thai-wsk-2026`:
-- **URL หลัก:** `https://<github-username>.github.io/thai-wsk-2026/`
+เมื่อ Repository ของคุณชื่อ `thaiwsk2026`:
+- **URL หลัก:** `https://<github-username>.github.io/thaiwsk2026/`
 - **ระบบ Routing:** ใช้ Hash-based routing (`#home`, `#exam`, `#score`, `#certificate`, `#admin`) เพื่อป้องกันปัญหาหน้า Error 404 เมื่อผู้ใช้กด Refresh หรือเปิดลิงก์หน้ารองโดยตรงบน GitHub Pages
 
 ---

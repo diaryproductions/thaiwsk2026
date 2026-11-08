@@ -307,7 +307,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'exams' as AdminSection, label: 'ระบบทำแบบทดสอบ', icon: BookOpen },
             { id: 'instructions' as AdminSection, label: 'คำชี้แจงระบบ', icon: HelpCircle },
             { id: 'footer' as AdminSection, label: 'ข้อมูล Footer & ติดต่อ', icon: Sliders },
-            { id: 'database' as AdminSection, label: 'ฐานข้อมูล & API Gateway', icon: Database },
+            { id: 'database' as AdminSection, label: 'ฐานข้อมูล & Google Apps Script', icon: Database },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1370,17 +1370,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </p>
               </div>
 
-              {/* Cloudflare Worker URL input */}
+              {/* Google Apps Script Web App URL input */}
               <div className="space-y-3">
                 <label className="block text-xs font-['Prompt'] font-semibold text-slate-800">
-                  Backend API Base URL (Cloudflare Worker)
+                  Google Apps Script Web App URL (Exec URL)
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="url"
                     value={backendUrlInput}
                     onChange={(e) => setBackendUrlInput(e.target.value)}
-                    placeholder="https://thai-wsk-backend.your-subdomain.workers.dev"
+                    placeholder="https://script.google.com/macros/s/AKfycb.../exec"
                     className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 font-mono text-xs text-slate-800 outline-none focus:border-[#7043A6]"
                   />
                   <button
@@ -1397,9 +1397,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span>ทดสอบการเชื่อมต่อ</span>
                   </button>
                 </div>
-                <p className="text-[11px] font-['Sarabun'] text-slate-500">
-                  * กำหนดค่าผ่าน <code>VITE_API_BASE_URL</code> ในไฟล์ .env หรือตั้งค่าในช่องนี้เพื่อให้ระบบเรียกใช้ API Gateway
-                </p>
+                <div className="text-[11px] font-['Sarabun'] text-slate-500 space-y-1">
+                  <p>• นำโค้ดจากไฟล์ <code>Code.gs</code> ไปวางใน Google Apps Script ของสเปรดชีต</p>
+                  <p>• กด <strong>Deploy (การทำให้ใช้งานได้)</strong> &gt; <strong>New deployment (การทำให้ใช้งานได้ใหม่)</strong> &gt; ประเภท: <strong>Web App (เว็บแอป)</strong></p>
+                  <p>• กำหนด Execute as: <strong>Me (ฉัน)</strong> และ Who has access: <strong>Anyone (ทุกคน)</strong> แล้วคัดลอก URL ที่ลงท้ายด้วย <code>/exec</code> มาวางที่นี่</p>
+                </div>
               </div>
 
               {/* Backend Test Result */}
@@ -1419,8 +1421,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     )}
                     <span>
                       {backendTestResult.connected
-                        ? 'เชื่อมต่อ Backend สำเร็จ'
-                        : 'ไม่สามารถเชื่อมต่อ Backend ได้'}
+                        ? 'เชื่อมต่อ Google Apps Script และ Google Sheets สำเร็จ'
+                        : 'ไม่สามารถเชื่อมต่อ Google Apps Script ได้'}
                     </span>
                   </div>
                   <p>{backendTestResult.message}</p>

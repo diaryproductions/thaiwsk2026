@@ -101,7 +101,7 @@ export const Footer: React.FC<FooterProps> = ({ footer }) => {
             </div>
 
             <div className="pt-3 border-t border-white/10 text-[11px] text-slate-400">
-              ระบบเชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API Gateway พร้อมรองรับการเผยแพร่ผ่าน GitHub Pages
+              ระบบเชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Google Apps Script พร้อมรองรับการเผยแพร่ผ่าน GitHub Pages
             </div>
           </div>
         </div>

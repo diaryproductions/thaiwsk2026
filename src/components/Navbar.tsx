@@ -47,9 +47,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>เชื่อมต่อชีตจริง</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-amber-200" title="ตั้งค่า Cloudflare Worker API เพื่อเชื่อมต่อกับ Google Sheets">
+              <span className="inline-flex items-center gap-1.5 text-amber-200" title="ตั้งค่า Google Apps Script Web App เพื่อเชื่อมต่อกับ Google Sheets">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                <span>รอเชื่อมต่อ API</span>
+                <span>รอเชื่อมต่อ Apps Script</span>
               </span>
             )}
             <span className="text-white/40">|</span>
