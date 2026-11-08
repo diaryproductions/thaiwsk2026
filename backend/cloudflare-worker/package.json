@@ -1,0 +1,16 @@
+{
+  "name": "thai-wsk-backend",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker Secure API Gateway for THAI WSK 2026 Google Sheets Integration",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.101.0"
+  }
+}

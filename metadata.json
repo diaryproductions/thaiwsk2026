@@ -1,0 +1,6 @@
+{
+  "name": "THAI WSK 2026",
+  "description": "ระบบสืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย โรงเรียนกระทุ่มแบน \"วิเศษสมุทคุณ\"",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
