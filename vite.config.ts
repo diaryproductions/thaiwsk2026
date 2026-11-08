@@ -4,8 +4,8 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
-  // Support GitHub Pages repository path or fallback to relative/root
-  const base = process.env.GITHUB_ACTIONS ? '/thai-wsk-2026/' : (process.env.VITE_BASE_PATH || './');
+  // แก้ไขชื่อ path ให้ตรงกับชื่อ Repository ของคุณ (ลบขีดกลางออกเป็น /thaiwsk2026/)
+  const base = process.env.GITHUB_ACTIONS ? '/thaiwsk2026/' : (process.env.VITE_BASE_PATH || './');
 
   return {
     base,
