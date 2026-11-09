@@ -1,6 +1,7 @@
 import React from 'react';
-import { BookOpen, Check, Feather, Sparkles } from 'lucide-react';
+import { BookOpen, Check, Feather, Sparkles, Users } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
+import { SmartImage } from './SmartImage';
 
 interface AboutSectionProps {
   about: SiteContent['about'];
@@ -15,16 +16,15 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ about }) => {
         {/* Left Column: Image Collage */}
         <div className="lg:col-span-5 space-y-4">
           <div className="relative rounded-2xl overflow-hidden border border-[#D6AF55]/40 shadow-md group">
-            <img
+            <SmartImage
               src={about.imageUrl}
               alt={about.title}
+              fallbackType="about"
               className="w-full h-72 sm:h-84 object-cover object-center group-hover:scale-102 transition-transform duration-500"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.display = 'none';
-              }}
+              containerClassName="w-full h-72 sm:h-84"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4 text-white">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 text-white pointer-events-none">
               <span className="text-[11px] font-['Prompt'] font-semibold text-[#D6AF55] uppercase tracking-wider">
                 กิจกรรมวิชาการ
               </span>
@@ -36,22 +36,40 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ about }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl overflow-hidden border border-slate-200 shadow-xs h-36">
-              <img
+              <SmartImage
                 src={about.secondaryImageUrl}
                 alt="สุนทรภู่ มรดกวรรณกรรม"
+                fallbackType="contest"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = 'none';
-                }}
+                containerClassName="w-full h-full"
               />
             </div>
-            <div className="rounded-xl bg-gradient-to-br from-[#4B267D] to-[#7043A6] text-white p-4 flex flex-col justify-between">
-              <Feather className="w-6 h-6 text-[#D6AF55]" />
-              <div>
-                <div className="text-xs font-['Prompt'] text-[#D6AF55]">สุนทรพจน์ &amp; วรรณศิลป์</div>
-                <div className="text-xs font-['Sarabun'] text-white/90 mt-1">เชิดชูเอกลักษณ์ภาษาชาติ</div>
+            
+            {about.teacherImageUrl ? (
+              <div className="rounded-xl overflow-hidden border border-[#D6AF55]/40 shadow-xs h-36 relative group">
+                <SmartImage
+                  src={about.teacherImageUrl}
+                  alt="คณะครูกลุ่มสาระการเรียนรู้ภาษาไทย"
+                  fallbackType="teacher"
+                  className="w-full h-full object-cover"
+                  containerClassName="w-full h-full"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-2.5">
+                  <span className="text-[11px] font-['Prompt'] font-semibold text-white truncate flex items-center gap-1">
+                    <Users className="w-3 h-3 text-[#D6AF55]" />
+                    <span>ครูผู้สอนภาษาไทย</span>
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-gradient-to-br from-[#4B267D] to-[#7043A6] text-white p-4 flex flex-col justify-between">
+                <Feather className="w-6 h-6 text-[#D6AF55]" />
+                <div>
+                  <div className="text-xs font-['Prompt'] text-[#D6AF55]">สุนทรพจน์ &amp; วรรณศิลป์</div>
+                  <div className="text-xs font-['Sarabun'] text-white/90 mt-1">เชิดชูเอกลักษณ์ภาษาชาติ</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

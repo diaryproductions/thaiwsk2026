@@ -63,6 +63,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={handleSelectTab}
         isBackendConnected={isBackendConnected}
+        logoUrl={content.siteImages?.headerLogoUrl}
       />
 
       {/* Main Page Content */}
@@ -108,7 +109,10 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer footer={content.footer} />
+      <Footer
+        footer={content.footer}
+        logoUrl={content.siteImages?.footerLogoUrl || content.siteImages?.headerLogoUrl}
+      />
     </div>
   );
 }

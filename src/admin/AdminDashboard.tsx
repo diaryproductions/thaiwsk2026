@@ -27,9 +27,21 @@ import {
   Laptop,
   Check,
   ExternalLink,
+  Camera,
+  FolderOpen,
+  Layers,
 } from 'lucide-react';
-import { SiteContent, HeroSlide, AwardCriterion, ScheduleItem, AnnouncementItem } from '../config/defaultContent';
+import {
+  SiteContent,
+  HeroSlide,
+  AwardCriterion,
+  ScheduleItem,
+  AnnouncementItem,
+  DEFAULT_SITE_CONTENT,
+  SiteImages,
+} from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
+import { SmartImage } from '../components/SmartImage';
 import {
   saveSiteContent,
   getApiBaseUrl,
@@ -54,6 +66,7 @@ interface AdminDashboardProps {
 
 type AdminSection =
   | 'meta'
+  | 'media'
   | 'slides'
   | 'about'
   | 'awards'
@@ -72,7 +85,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   refreshContent,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminSection>('meta');
-  const [formData, setFormData] = useState<SiteContent>(JSON.parse(JSON.stringify(content)));
+  const [formData, setFormData] = useState<SiteContent>(() => {
+    const copy: SiteContent = JSON.parse(JSON.stringify(content));
+    if (!copy.siteImages) {
+      copy.siteImages = { ...DEFAULT_SITE_CONTENT.siteImages };
+    }
+    if (!copy.about.teacherImageUrl) {
+      copy.about.teacherImageUrl = 'images/thai_teacher_team_2026.png';
+    }
+    return copy;
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -382,7 +404,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-2 space-y-1 font-['Prompt'] text-xs sm:text-sm shadow-xs">
           {[
             { id: 'meta' as AdminSection, label: 'ข้อมูลทั่วไป & Countdown', icon: Globe },
-            { id: 'slides' as AdminSection, label: 'ภาพสไลด์และสื่อ', icon: Image },
+            { id: 'media' as AdminSection, label: 'จัดการรูปภาพทุกจุด (Media)', icon: Camera },
+            { id: 'slides' as AdminSection, label: 'ภาพสไลด์หน้าแรก (Hero)', icon: Image },
             { id: 'about' as AdminSection, label: 'เกี่ยวกับโครงการวิชาการ', icon: FileText },
             { id: 'awards' as AdminSection, label: 'เกณฑ์รางวัลและเกียรติบัตร', icon: Award },
             { id: 'schedule' as AdminSection, label: 'กำหนดการสำคัญ', icon: Calendar },
@@ -510,6 +533,489 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
+          {/* TAB: MEDIA & ALL IMAGES */}
+          {activeTab === 'media' && (
+            <div className="space-y-8">
+              <div className="border-b pb-4">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-[#D6AF55]" />
+                  <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
+                    ศูนย์จัดการรูปภาพและสื่อทั้งหมดในเว็บไซต์ (Media Center)
+                  </h3>
+                </div>
+                <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
+                  ปรับเปลี่ยนและจัดการรูปภาพทุกตำแหน่งบนเว็บไซต์: โลโก้, แบนเนอร์, ภาพพื้นหลัง, ภาพสไลด์, ภาพคณะครู และภาพประกอบทุกหน้า
+                  โดยข้อมูลจะถูกบันทึกถาวรลง Google Sheets และแสดงผลตรงกันทุกอุปกรณ์ทันที
+                </p>
+              </div>
+
+              {/* SECTION A: PRESET & LOCAL ASSETS GALLERY */}
+              <div className="bg-[#FAF8FD] rounded-2xl p-5 border border-[#D6AF55]/40 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4 text-[#7043A6]" />
+                    <h4 className="font-['Prompt'] font-bold text-sm text-[#4B267D]">
+                      คลังไฟล์ภาพในระบบ (Preset System Assets)
+                    </h4>
+                  </div>
+                  <span className="text-[11px] font-['Sarabun'] text-slate-500">
+                    * รูปภาพที่รวมอยู่ในโฟลเดอร์ <code>public/images/</code> พร้อมเรียกใช้ทุกเครื่อง
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    {
+                      name: 'ตรากลุ่มสาระฯ ภาษาไทย WSK',
+                      url: 'images/school_wsk_emblem_1794141246706.jpg',
+                      desc: 'โลโก้หัวเว็บ / โลโก้ท้ายเว็บ / Favicon',
+                      type: 'logo' as const,
+                      targetKey: 'headerLogoUrl' as keyof SiteImages,
+                    },
+                    {
+                      name: 'แบนเนอร์หลัก "สืบศิลป์ถิ่นอักษร"',
+                      url: 'images/hero_thai_wsk_banner_1794141245856.jpg',
+                      desc: 'ภาพพื้นหลัง Hero Section / แบนเนอร์หน้าแรก',
+                      type: 'hero' as const,
+                      targetKey: 'heroBackgroundUrl' as keyof SiteImages,
+                    },
+                    {
+                      name: 'ภาพคณะครูภาษาไทยวิเศษฯ ๒๕๖๙',
+                      url: 'images/thai_teacher_team_2026.png',
+                      desc: 'ภาพคุณครูในส่วนเกี่ยวกับโครงการ / ข่าวสาร',
+                      type: 'teacher' as const,
+                      targetKey: 'aboutTeacherTeamUrl' as keyof SiteImages,
+                    },
+                    {
+                      name: 'ภาพการจัดสอบและวิชาการ',
+                      url: 'images/about_academic_thai_1794141247386.jpg',
+                      desc: 'ภาพหลัก About / แบนเนอร์หน้าทำแบบทดสอบ',
+                      type: 'about' as const,
+                      targetKey: 'aboutMainImageUrl' as keyof SiteImages,
+                    },
+                    {
+                      name: 'ภาพประกวดวรรณคดีและสุนทรภู่',
+                      url: 'images/thai_literature_contest_1794141246113.jpg',
+                      desc: 'ภาพประกอบรอง About / แบนเนอร์เกียรติบัตร',
+                      type: 'contest' as const,
+                      targetKey: 'aboutSecondaryImageUrl' as keyof SiteImages,
+                    },
+                  ].map((asset, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs space-y-2.5 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="h-28 rounded-lg overflow-hidden border border-slate-100 relative group">
+                          <SmartImage
+                            src={asset.url}
+                            alt={asset.name}
+                            fallbackType={asset.type}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            containerClassName="w-full h-full"
+                          />
+                        </div>
+                        <div className="mt-2">
+                          <p className="font-['Prompt'] font-bold text-xs text-[#30283A] truncate">
+                            {asset.name}
+                          </p>
+                          <p className="text-[11px] font-['Sarabun'] text-slate-500 mt-0.5">
+                            {asset.desc}
+                          </p>
+                          <code className="text-[10px] text-slate-400 font-mono block mt-1 truncate">
+                            {asset.url}
+                          </code>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 font-['Prompt'] text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(asset.url);
+                            alert(`คัดลอก URL: ${asset.url} เรียบร้อยแล้ว`);
+                          }}
+                          className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>คัดลอก</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              siteImages: {
+                                ...formData.siteImages,
+                                [asset.targetKey]: asset.url,
+                              },
+                              ...(asset.targetKey === 'aboutMainImageUrl'
+                                ? { about: { ...formData.about, imageUrl: asset.url } }
+                                : {}),
+                              ...(asset.targetKey === 'aboutSecondaryImageUrl'
+                                ? { about: { ...formData.about, secondaryImageUrl: asset.url } }
+                                : {}),
+                              ...(asset.targetKey === 'aboutTeacherTeamUrl'
+                                ? { about: { ...formData.about, teacherImageUrl: asset.url } }
+                                : {}),
+                            });
+                          }}
+                          className="px-2 py-1 rounded bg-[#7043A6]/10 hover:bg-[#7043A6] hover:text-white text-[#4B267D] font-semibold transition-colors"
+                        >
+                          <span>ใช้งานจุดนี้</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECTION B: PLACEMENT IMAGE CONTROLS WITH LIVE PREVIEW */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-['Prompt'] font-bold text-base text-[#4B267D] flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-[#D6AF55]" />
+                    <span>กำหนดรูปภาพแยกตามตำแหน่งที่ใช้งานบนเว็บไซต์</span>
+                  </h4>
+                  <p className="text-xs font-['Sarabun'] text-slate-500">
+                    กรอก URL รูปภาพ (สามารถใช้ภาพในระบบ หรือลิงก์จาก ImgBB, Cloudinary, Google Drive) พร้อมดูตัวอย่างจริงด้านขวา
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 1. Header Logo */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๑. โลโก้หัวเว็บ / แถบเมนูด้านบน (Header Logo)
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
+                        Navbar
+                      </span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="w-16 h-16 rounded-full border border-[#D6AF55] overflow-hidden shrink-0 bg-white">
+                        <SmartImage
+                          src={formData.siteImages?.headerLogoUrl}
+                          alt="ตัวอย่างโลโก้"
+                          fallbackType="logo"
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <input
+                          type="text"
+                          value={formData.siteImages?.headerLogoUrl || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              siteImages: {
+                                ...formData.siteImages,
+                                headerLogoUrl: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="images/school_wsk_emblem_1794141246706.jpg"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                        />
+                        <p className="text-[11px] text-slate-500 font-['Sarabun']">
+                          แสดงในวงกลมขอบทองบนแถบเมนูด้านบนของทุกหน้า
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Footer Logo */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๒. โลโก้ส่วนท้ายเว็บไซต์ (Footer Logo)
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
+                        Footer
+                      </span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="w-16 h-16 rounded-full border border-[#D6AF55] overflow-hidden shrink-0 bg-[#30283A]">
+                        <SmartImage
+                          src={formData.siteImages?.footerLogoUrl || formData.siteImages?.headerLogoUrl}
+                          alt="ตัวอย่างโลโก้ Footer"
+                          fallbackType="logo"
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <input
+                          type="text"
+                          value={formData.siteImages?.footerLogoUrl || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              siteImages: {
+                                ...formData.siteImages,
+                                footerLogoUrl: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="images/school_wsk_emblem_1794141246706.jpg"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                        />
+                        <p className="text-[11px] text-slate-500 font-['Sarabun']">
+                          แสดงข้างชื่อโรงเรียนและข้อมูลติดต่อส่วนท้ายเว็บ
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Hero Background */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๓. ภาพพื้นหลังส่วนหัว (Hero Banner Background)
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
+                        Hero Section
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.heroBackgroundUrl}
+                        alt="Hero Background"
+                        fallbackType="hero"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.heroBackgroundUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            heroBackgroundUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/hero_thai_wsk_banner_1794141245856.jpg"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* 4. Teacher Team Image */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๔. ภาพคณะครูกลุ่มสาระการเรียนรู้ภาษาไทย (Teacher Team)
+                      </span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-['Prompt']">
+                        About &amp; Team
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.aboutTeacherTeamUrl || formData.about?.teacherImageUrl}
+                        alt="ภาพคณะครูภาษาไทย"
+                        fallbackType="teacher"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.aboutTeacherTeamUrl || formData.about?.teacherImageUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutTeacherTeamUrl: e.target.value,
+                          },
+                          about: {
+                            ...formData.about,
+                            teacherImageUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/thai_teacher_team_2026.png"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* 5. About Main Image */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๕. ภาพหลักส่วน &quot;เกี่ยวกับโครงการ&quot; (About Main)
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
+                        About
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.aboutMainImageUrl || formData.about?.imageUrl}
+                        alt="About Main"
+                        fallbackType="about"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.aboutMainImageUrl || formData.about?.imageUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutMainImageUrl: e.target.value,
+                          },
+                          about: {
+                            ...formData.about,
+                            imageUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/about_academic_thai_1794141247386.jpg"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* 6. About Secondary Image */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๖. ภาพประกอบรองส่วน &quot;เกี่ยวกับโครงการ&quot; (About Secondary)
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
+                        About
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.aboutSecondaryImageUrl || formData.about?.secondaryImageUrl}
+                        alt="About Secondary"
+                        fallbackType="contest"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.aboutSecondaryImageUrl || formData.about?.secondaryImageUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutSecondaryImageUrl: e.target.value,
+                          },
+                          about: {
+                            ...formData.about,
+                            secondaryImageUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/thai_literature_contest_1794141246113.jpg"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* 7. Exam Banner */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๗. แบนเนอร์หน้าระบบทำแบบทดสอบ (Exam Page Banner)
+                      </span>
+                      <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-['Prompt']">
+                        Exam
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.examBannerUrl}
+                        alt="Exam Banner"
+                        fallbackType="about"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.examBannerUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            examBannerUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/about_academic_thai_1794141247386.jpg"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* 8. Certificate Banner */}
+                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
+                        ๘. แบนเนอร์หน้าเกียรติบัตร (Certificate Banner)
+                      </span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-['Prompt']">
+                        Certificate
+                      </span>
+                    </div>
+
+                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.siteImages?.certificateBannerUrl}
+                        alt="Certificate Banner"
+                        fallbackType="contest"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={formData.siteImages?.certificateBannerUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          siteImages: {
+                            ...formData.siteImages,
+                            certificateBannerUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/thai_literature_contest_1794141246113.jpg"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 2: SLIDES */}
           {activeTab === 'slides' && (
             <div className="space-y-6">
@@ -550,20 +1056,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-['Prompt']">
-                      <div className="sm:col-span-2">
-                        <label className="block text-slate-700 font-semibold mb-1">
-                          URL ของรูปภาพ (ImgBB / Cloudinary / หรือพาธภายใน)
-                        </label>
-                        <input
-                          type="text"
-                          value={slide.imageUrl}
-                          onChange={(e) => {
-                            const updated = [...formData.heroSlides];
-                            updated[idx].imageUrl = e.target.value;
-                            setFormData({ ...formData, heroSlides: updated });
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                        />
+                      <div className="sm:col-span-2 flex gap-3 items-center">
+                        <div className="w-24 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-900">
+                          <SmartImage
+                            src={slide.imageUrl}
+                            alt={slide.title}
+                            fallbackType="hero"
+                            className="w-full h-full object-cover"
+                            containerClassName="w-full h-full"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-slate-700 font-semibold mb-1">
+                            URL ของรูปภาพสไลด์ (ImgBB / Cloudinary / หรือพาธภายใน เช่น images/...)
+                          </label>
+                          <input
+                            type="text"
+                            value={slide.imageUrl}
+                            onChange={(e) => {
+                              const updated = [...formData.heroSlides];
+                              updated[idx].imageUrl = e.target.value;
+                              setFormData({ ...formData, heroSlides: updated });
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -678,11 +1195,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">
-                      URL รูปภาพหลัก
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <label className="block text-slate-700 font-semibold">
+                      URL รูปภาพหลัก (About Main)
                     </label>
+                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.about.imageUrl}
+                        alt="ภาพหลัก About"
+                        fallbackType="about"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
                     <input
                       type="text"
                       value={formData.about.imageUrl}
@@ -690,15 +1216,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setFormData({
                           ...formData,
                           about: { ...formData.about, imageUrl: e.target.value },
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutMainImageUrl: e.target.value,
+                          },
                         })
                       }
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
                     />
                   </div>
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">
-                      URL รูปภาพประกอบรอง
+
+                  <div className="space-y-2">
+                    <label className="block text-slate-700 font-semibold">
+                      URL รูปภาพประกอบรอง (Literary)
                     </label>
+                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.about.secondaryImageUrl}
+                        alt="ภาพประกอบ About"
+                        fallbackType="contest"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
                     <input
                       type="text"
                       value={formData.about.secondaryImageUrl}
@@ -706,8 +1246,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setFormData({
                           ...formData,
                           about: { ...formData.about, secondaryImageUrl: e.target.value },
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutSecondaryImageUrl: e.target.value,
+                          },
                         })
                       }
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-slate-700 font-semibold">
+                      URL ภาพคณะครูภาษาไทย (Team)
+                    </label>
+                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+                      <SmartImage
+                        src={formData.about.teacherImageUrl || formData.siteImages?.aboutTeacherTeamUrl}
+                        alt="ภาพคณะครูภาษาไทย"
+                        fallbackType="teacher"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.about.teacherImageUrl || formData.siteImages?.aboutTeacherTeamUrl || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          about: { ...formData.about, teacherImageUrl: e.target.value },
+                          siteImages: {
+                            ...formData.siteImages,
+                            aboutTeacherTeamUrl: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="images/thai_teacher_team_2026.png"
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
                     />
                   </div>
@@ -1098,6 +1673,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 font-['Sarabun']"
                         />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-slate-700 font-semibold mb-1">
+                          URL รูปภาพประกอบประกาศ (ระบุ images/... หรือ URL ภายนอก)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          {ann.imageUrl && (
+                            <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-300 bg-slate-900 shrink-0">
+                              <SmartImage
+                                src={ann.imageUrl}
+                                alt={ann.title}
+                                fallbackType="contest"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <input
+                            type="text"
+                            value={ann.imageUrl || ''}
+                            onChange={(e) => {
+                              const updated = [...formData.announcements];
+                              updated[idx].imageUrl = e.target.value;
+                              setFormData({ ...formData, announcements: updated });
+                            }}
+                            placeholder="images/thai_literature_contest_1794141246113.jpg หรือ URL รูปภาพ"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

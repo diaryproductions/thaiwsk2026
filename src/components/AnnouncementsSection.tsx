@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, Pin, User, Calendar } from 'lucide-react';
 import { AnnouncementItem } from '../config/defaultContent';
+import { SmartImage } from './SmartImage';
 
 interface AnnouncementsSectionProps {
   announcements: AnnouncementItem[];
@@ -67,11 +68,22 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
                 )}
               </div>
 
+              {item.imageUrl && (
+                <div className="mb-3 rounded-xl overflow-hidden max-h-48 border border-slate-200">
+                  <SmartImage
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="w-full h-48 object-cover"
+                    containerClassName="w-full h-48"
+                  />
+                </div>
+              )}
+
               <h3 className="font-['Prompt'] font-bold text-base sm:text-lg text-[#30283A] mb-2 leading-snug">
                 {item.title}
               </h3>
 
-              <p className="font-['Sarabun'] text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="font-['Sarabun'] text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
                 {item.content}
               </p>
             </div>

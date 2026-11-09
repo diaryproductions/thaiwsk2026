@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, ExternalLink, AlertCircle, Clock, FileText, CheckCircle2 } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
+import { SmartImage } from '../components/SmartImage';
 
 interface ExamPageProps {
   content: SiteContent;
@@ -56,9 +57,20 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
       {/* Main Exam Card */}
       {currentExam && (
         <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Card Top Banner */}
-          <div className="bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#4B267D] p-6 sm:p-8 text-white">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Card Top Banner with optional image background */}
+          <div className="relative bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#4B267D] p-6 sm:p-8 text-white overflow-hidden">
+            {content.siteImages?.examBannerUrl && (
+              <div className="absolute inset-0 opacity-15 pointer-events-none mix-blend-overlay">
+                <SmartImage
+                  src={content.siteImages.examBannerUrl}
+                  alt="Exam Banner"
+                  fallbackType="about"
+                  className="w-full h-full object-cover"
+                  containerClassName="w-full h-full"
+                />
+              </div>
+            )}
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-['Prompt'] font-semibold text-[#D6AF55] tracking-wide uppercase">
                   {currentExam.grades}

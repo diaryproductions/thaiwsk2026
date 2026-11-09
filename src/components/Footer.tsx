@@ -1,12 +1,14 @@
 import React from 'react';
 import { Phone, Mail, Globe, MapPin, ExternalLink, Code2 } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
+import { SmartImage } from './SmartImage';
 
 interface FooterProps {
   footer: SiteContent['footer'];
+  logoUrl?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ footer }) => {
+export const Footer: React.FC<FooterProps> = ({ footer, logoUrl }) => {
   return (
     <footer className="bg-[#30283A] text-slate-300 font-['Sarabun'] border-t border-[#D6AF55]/30">
       {/* Top Academic Ribbon */}
@@ -29,14 +31,13 @@ export const Footer: React.FC<FooterProps> = ({ footer }) => {
           {/* Col 1: School Identity & Address */}
           <div className="md:col-span-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-[#4B267D] border border-[#D6AF55] p-0.5 flex items-center justify-center shrink-0">
-                <img
-                  src="/src/assets/images/school_wsk_emblem_1794141246706.jpg"
+              <div className="w-12 h-12 rounded-full bg-[#4B267D] border border-[#D6AF55] p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                <SmartImage
+                  src={logoUrl || 'images/school_wsk_emblem_1794141246706.jpg'}
                   alt="ตราโรงเรียน"
+                  fallbackType="logo"
                   className="w-full h-full object-cover rounded-full"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
+                  containerClassName="w-full h-full rounded-full"
                 />
               </div>
               <div>

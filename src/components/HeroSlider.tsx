@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, BookOpen, Award, CheckCircle } from 'lucide-react';
 import { HeroSlide } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
+import { SmartImage } from './SmartImage';
 
 interface HeroSliderProps {
   slides: HeroSlide[];
@@ -51,15 +52,12 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onNavigate }) =>
             >
               {/* Background Photography with fallback gradient */}
               <div className="absolute inset-0 bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#30283A]">
-                <img
+                <SmartImage
                   src={slide.imageUrl}
                   alt={slide.title}
+                  fallbackType="hero"
                   className="w-full h-full object-cover object-center"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    // Fallback to stylized background on error
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
+                  containerClassName="w-full h-full"
                 />
               </div>
 

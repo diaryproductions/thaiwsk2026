@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X, Shield, ExternalLink, Sparkles } from 'lucide-react';
+import { SmartImage } from './SmartImage';
 
 export type NavTab = 'home' | 'exam' | 'score' | 'certificate' | 'admin';
 
@@ -7,12 +8,14 @@ interface NavbarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   isBackendConnected: boolean;
+  logoUrl?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   isBackendConnected,
+  logoUrl,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -71,15 +74,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7043A6] rounded-lg p-1"
           >
-            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#4B267D] to-[#7043A6] p-0.5 border border-[#D6AF55] shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <img
-                src="/src/assets/images/school_wsk_emblem_1794141246706.jpg"
+            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#4B267D] to-[#7043A6] p-0.5 border border-[#D6AF55] shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+              <SmartImage
+                src={logoUrl || 'images/school_wsk_emblem_1794141246706.jpg'}
                 alt="ตรากลุ่มสาระฯ ภาษาไทย WSK"
+                fallbackType="logo"
                 className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  // Fallback to SVG icon if image fails
-                  (e.currentTarget as HTMLElement).style.display = 'none';
-                }}
+                containerClassName="w-full h-full rounded-full"
               />
             </div>
             <div>

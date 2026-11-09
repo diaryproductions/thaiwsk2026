@@ -4,6 +4,7 @@ import { searchCertificate, CertificateSearchResult } from '../services/api';
 import { CertificateModal } from '../components/CertificateModal';
 import { SiteContent } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
+import { SmartImage } from '../components/SmartImage';
 
 interface CertificatePageProps {
   content: SiteContent;
@@ -123,6 +124,24 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
           ค้นหาและดาวน์โหลดเกียรติบัตรจากแผ่นงาน &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot;
         </p>
       </div>
+
+      {/* Decorative Banner if configured */}
+      {content.siteImages?.certificateBannerUrl && (
+        <div className="max-w-3xl mx-auto mb-6 rounded-2xl overflow-hidden shadow-xs border border-[#D6AF55]/30 h-32 sm:h-44 relative bg-slate-900">
+          <SmartImage
+            src={content.siteImages.certificateBannerUrl}
+            alt="เกียรติบัตรอิเล็กทรอนิกส์"
+            fallbackType="contest"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
+            <span className="text-white font-['Prompt'] text-xs font-semibold drop-shadow-sm flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-[#D6AF55]" />
+              โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ๒๕๖๙
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Search Input Box */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-10">

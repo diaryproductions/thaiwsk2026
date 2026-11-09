@@ -39,6 +39,7 @@ export interface AnnouncementItem {
   date: string;
   author: string;
   content: string;
+  imageUrl?: string;
   isPinned: boolean;
   isActive: boolean;
   sortOrder: number;
@@ -56,6 +57,19 @@ export interface ExamLevel {
   instructions: string[];
 }
 
+export interface SiteImages {
+  headerLogoUrl: string; // โลโก้หัวเว็บ / แถบเมนู
+  faviconUrl: string;   // ไอคอนเว็บ
+  heroBackgroundUrl: string; // ภาพพื้นหลัง Hero Section
+  aboutMainImageUrl: string;  // รูปหลักเกี่ยวกับโครงการ
+  aboutSecondaryImageUrl: string; // รูปประกอบรองเกี่ยวกับโครงการ
+  aboutTeacherTeamUrl: string; // รูปรวมคณะครูภาษาไทย
+  examBannerUrl: string;     // แบนเนอร์หน้าระบบทำแบบทดสอบ
+  scoreBannerUrl: string;    // แบนเนอร์หน้าตรวจสอบคะแนน
+  certificateBannerUrl: string; // แบนเนอร์หน้าเกียรติบัตร
+  footerLogoUrl: string;     // ตราโรงเรียนท้ายเว็บ
+}
+
 export interface SiteContent {
   version: number;
   updatedAt: string;
@@ -66,6 +80,7 @@ export interface SiteContent {
     countdownTarget: string; // ISO date string
     countdownLabel: string;
   };
+  siteImages: SiteImages;
   heroSlides: HeroSlide[];
   about: {
     title: string;
@@ -74,6 +89,7 @@ export interface SiteContent {
     objectives: string[];
     imageUrl: string;
     secondaryImageUrl: string;
+    teacherImageUrl?: string;
   };
   awardCriteria: AwardCriterion[];
   schedule: ScheduleItem[];
@@ -108,10 +124,22 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     countdownTarget: '2026-12-15T09:00:00+07:00',
     countdownLabel: 'เปิดระบบสอบวัดความรู้ภาษาไทยออนไลน์',
   },
+  siteImages: {
+    headerLogoUrl: 'images/school_wsk_emblem_1794141246706.jpg',
+    faviconUrl: 'favicon.svg',
+    heroBackgroundUrl: 'images/hero_thai_wsk_banner_1794141245856.jpg',
+    aboutMainImageUrl: 'images/about_academic_thai_1794141247386.jpg',
+    aboutSecondaryImageUrl: 'images/thai_literature_contest_1794141246113.jpg',
+    aboutTeacherTeamUrl: 'images/thai_teacher_team_2026.png',
+    examBannerUrl: 'images/about_academic_thai_1794141247386.jpg',
+    scoreBannerUrl: 'images/hero_thai_wsk_banner_1794141245856.jpg',
+    certificateBannerUrl: 'images/thai_literature_contest_1794141246113.jpg',
+    footerLogoUrl: 'images/school_wsk_emblem_1794141246706.jpg',
+  },
   heroSlides: [
     {
       id: 'slide-1',
-      imageUrl: '/src/assets/images/hero_thai_wsk_banner_1794141245856.jpg',
+      imageUrl: 'images/hero_thai_wsk_banner_1794141245856.jpg',
       title: 'สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย',
       subtitle: 'โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ประจำปีการศึกษา ๒๕๖๙',
       badge: 'กิจกรรมวิชาการระดับโรงเรียน',
@@ -119,7 +147,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     {
       id: 'slide-2',
-      imageUrl: '/src/assets/images/about_academic_thai_1794141247386.jpg',
+      imageUrl: 'images/about_academic_thai_1794141247386.jpg',
       title: 'เวทีประลองปัญญา เชิดชูคุณค่าภาษาไทย',
       subtitle: 'ส่งเสริมทักษะการอ่าน วรรณกรรม วรรณคดี และหลักภาษาไทยสู่ความเป็นเลิศ',
       badge: 'กลุ่มสาระการเรียนรู้ภาษาไทย',
@@ -127,7 +155,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     {
       id: 'slide-3',
-      imageUrl: '/src/assets/images/thai_literature_contest_1794141246113.jpg',
+      imageUrl: 'images/thai_literature_contest_1794141246113.jpg',
       title: 'มรดกอักษรศาสตร์ น้อมรำลึกมหากวีสุนทรภู่',
       subtitle: 'ร่วมสืบสานความไพเราะทางภาษา และวรรณศิลป์อันเป็นสมบัติล้ำค่าของชาติ',
       badge: 'โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"',
@@ -147,8 +175,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       'เพื่อเชิดชูเกียรติและสร้างแรงบันดาลใจในการศึกษาภาษาและวรรณคดีไทยผ่านเกียรติบัตรอิเล็กทรอนิกส์',
       'เพื่อนำผลการประเมินไปใช้เป็นข้อมูลสารสนเทศในการพัฒนาการจัดการเรียนการสอนอย่างมีประสิทธิภาพ',
     ],
-    imageUrl: '/src/assets/images/about_academic_thai_1794141247386.jpg',
-    secondaryImageUrl: '/src/assets/images/thai_literature_contest_1794141246113.jpg',
+    imageUrl: 'images/about_academic_thai_1794141247386.jpg',
+    secondaryImageUrl: 'images/thai_literature_contest_1794141246113.jpg',
+    teacherImageUrl: 'images/thai_teacher_team_2026.png',
   },
   awardCriteria: [
     {
