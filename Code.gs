@@ -162,33 +162,53 @@ function jsonResponse(obj) {
  * ตรวจสอบความพร้อมของฐานข้อมูลและสิทธิ์เข้าถึงชีต
  */
 function checkHealth() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var scoreSheetObj = ss.getSheetByName(SCORE_SHEET);
-  var certSheetObj = ss.getSheetByName(CERTIFICATE_SHEET);
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    if (!ss) {
+      return {
+        status: 'error',
+        success: false,
+        errorType: 'SPREADSHEET_NOT_FOUND',
+        message: 'ไม่สามารถเปิด Google Spreadsheet ID: ' + SPREADSHEET_ID + ' ได้',
+        timestamp: new Date().toISOString(),
+      };
+    }
 
-  var scoreSheetExists = scoreSheetObj !== null;
-  var certSheetExists = certSheetObj !== null;
+    var scoreSheetObj = ss.getSheetByName(SCORE_SHEET);
+    var certSheetObj = ss.getSheetByName(CERTIFICATE_SHEET);
 
-  var scoreRowsCount = scoreSheetExists ? scoreSheetObj.getLastRow() : 0;
-  var certRowsCount = certSheetExists ? certSheetObj.getLastRow() : 0;
+    var scoreSheetExists = scoreSheetObj !== null;
+    var certSheetExists = certSheetObj !== null;
 
-  return {
-    status: 'ok',
-    success: true,
-    spreadsheetId: SPREADSHEET_ID,
-    spreadsheetTitle: ss.getName(),
-    sheets: {
-      scoreSheet: SCORE_SHEET,
-      scoreSheetExists: scoreSheetExists,
-      scoreRows: scoreRowsCount,
-      certificateSheet: CERTIFICATE_SHEET,
-      certificateSheetExists: certSheetExists,
-      certificateRows: certRowsCount,
-    },
-    sheetsApiStatus: 'connected_verified',
-    timestamp: new Date().toISOString(),
-    backendType: 'google_apps_script',
-  };
+    var scoreRowsCount = scoreSheetExists ? scoreSheetObj.getLastRow() : 0;
+    var certRowsCount = certSheetExists ? certSheetObj.getLastRow() : 0;
+
+    return {
+      status: 'ok',
+      success: true,
+      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetTitle: ss.getName(),
+      sheets: {
+        scoreSheet: SCORE_SHEET,
+        scoreSheetExists: scoreSheetExists,
+        scoreRows: scoreRowsCount,
+        certificateSheet: CERTIFICATE_SHEET,
+        certificateSheetExists: certSheetExists,
+        certificateRows: certRowsCount,
+      },
+      sheetsApiStatus: 'connected_verified',
+      timestamp: new Date().toISOString(),
+      backendType: 'google_apps_script',
+    };
+  } catch (err) {
+    return {
+      status: 'error',
+      success: false,
+      errorType: 'SPREADSHEET_ACCESS_DENIED',
+      message: 'เกิดข้อผิดพลาดในการเปิด Google Sheets: ' + err.message,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }
 
 /**

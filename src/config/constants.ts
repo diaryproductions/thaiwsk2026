@@ -10,6 +10,13 @@ export const APP_CONFIG = {
   ORGANIZATION: 'กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"',
   DEFAULT_ADMIN_USER: 'admin_wsk',
   
+  // Shared Configuration File (loaded at runtime by every device without redeployment)
+  CONFIG_FILE_PATH: 'app-config.json',
+
+  // Built-in Default Google Apps Script Web App URL fallback (Deploy -> Web App -> /exec)
+  // When configured here or in /public/app-config.json, ALL devices connect automatically!
+  DEFAULT_GAS_URL: '',
+
   // Google Sheets Database Constants (Strictly verified)
   SPREADSHEET_ID: '1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI',
   SCORE_SHEET: 'ตรวจสอบคะแนน',

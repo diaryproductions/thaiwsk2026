@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '../config/defaultContent';
-import { fetchSiteContent, getApiBaseUrl } from '../services/api';
+import { fetchSiteContent, getApiBaseUrl, initSharedConfig } from '../services/api';
 import { APP_CONFIG } from '../config/constants';
 
 export function useSiteContent() {
@@ -28,6 +28,8 @@ export function useSiteContent() {
     else setIsRefreshing(true);
 
     try {
+      // 1. Ensure shared configuration is loaded from public/app-config.json
+      await initSharedConfig();
       const baseUrl = getApiBaseUrl();
       if (!baseUrl) {
         setIsBackendConnected(false);

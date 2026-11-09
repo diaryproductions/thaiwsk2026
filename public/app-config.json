@@ -1,0 +1,11 @@
+{
+  "gasWebAppUrl": "",
+  "spreadsheetId": "1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI",
+  "scoreSheet": "ตรวจสอบคะแนน",
+  "certificateSheet": "ดาวน์โหลดเกียรติบัตร",
+  "maxScoreDefault": 20,
+  "pollingIntervalMs": 20000,
+  "appName": "THAI WSK 2026",
+  "description": "Shared configuration file deployed with GitHub Pages so that every phone, computer, and device connects to the same Google Apps Script backend automatically without individual setup.",
+  "lastUpdated": "2026-11-09T12:00:00.000Z"
+}

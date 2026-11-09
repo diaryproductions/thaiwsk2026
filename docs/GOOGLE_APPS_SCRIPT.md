@@ -46,21 +46,46 @@
 
 ---
 
-## ขั้นตอนที่ 4: นำ URL ไปเชื่อมต่อกับเว็บไซต์
+## ขั้นตอนที่ 4: นำ URL ไปเชื่อมต่อเพื่อให้ใช้งานได้ทุกอุปกรณ์ (Shared Configuration)
 
-### วิธีที่ 1: กำหนดผ่านหน้าเว็บไซต์ (แนะนำ)
-1. เปิดหน้าเว็บไซต์ THAI WSK 2026 บน GitHub Pages
-2. คลิกไอคอนรูปโล่มุมขวาบน หรือเข้าผ่านเมนู **"สำหรับแอดมิน"**
-3. ล็อกอินเข้าสู่ระบบ (รหัสผ่านเริ่มต้น: `thai_wsk_2026`)
-4. ไปที่แท็บ **"ฐานข้อมูล & Google Apps Script"**
-5. วาง Web App URL ที่คัดลอกมาลงในช่อง **Google Apps Script Web App URL**
-6. กดปุ่ม **"ทดสอบการเชื่อมต่อ"** เมื่อขึ้นเครื่องหมายถูกสีเขียว ระบบจะเชื่อมต่อและดึงข้อมูลจาก Google Sheets ได้ทันที
+เพื่อให้โทรศัพท์มือถือ แท็บเล็ต และคอมพิวเตอร์ทุกเครื่องสามารถเข้าถึงฐานข้อมูลได้ทันที โดย**ไม่ต้อง**เข้าไปตั้งค่าในแต่ละเครื่อง:
 
-### วิธีที่ 2: กำหนดผ่าน Environment Variable (.env)
-กำหนดในไฟล์ `.env` หรือ GitHub Secrets:
+### วิธีที่ 1: กำหนดผ่านไฟล์ `public/app-config.json` (แนะนำสูงสุดสำหรับ GitHub Pages)
+1. เปิดไฟล์ `public/app-config.json` ในโปรเจกต์
+2. นำ URL ที่ลงท้ายด้วย `/exec` ไปใส่ในค่า `gasWebAppUrl`:
+   ```json
+   {
+     "gasWebAppUrl": "https://script.google.com/macros/s/AKfycb.../exec",
+     "spreadsheetId": "1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI",
+     "scoreSheet": "ตรวจสอบคะแนน",
+     "certificateSheet": "ดาวน์โหลดเกียรติบัตร",
+     "appName": "THAI WSK 2026"
+   }
+   ```
+3. Commit และ Push ขึ้น GitHub Pages — ทุกอุปกรณ์ในโลกจะโหลด URL เดียวกันนี้จากไฟล์ config ส่วนกลางและเชื่อมต่อได้ทันที!
+
+### วิธีที่ 2: ตั้งค่าและส่งออกจากหน้า Admin Dashboard
+1. เปิดหน้าเว็บไซต์ เข้าเมนู **"สำหรับแอดมิน"** > แท็บ **"ฐานข้อมูล & Google Apps Script"**
+2. วาง URL ลงในช่องแล้วกด **"ทดสอบการเชื่อมต่อ (Health Check)"**
+3. ระบบจะทำการตรวจสอบความถูกต้อง ๖ ด้านทันที
+4. กดปุ่ม **"ดาวน์โหลด app-config.json"** (หรือกด "คัดลอก JSON")
+5. นำไฟล์ที่ได้ไปใส่ไว้ที่โฟลเดอร์ `public/app-config.json` ใน GitHub แล้ว Deploy
+
+### วิธีที่ 3: กำหนดผ่าน Environment Variable (.env หรือ GitHub Secrets)
+กำหนดใน GitHub Repository Secrets / Variables หรือไฟล์ `.env`:
 ```env
-VITE_GAS_URL="https://script.google.com/macros/s/AKfycbx.../exec"
+VITE_GAS_URL="https://script.google.com/macros/s/AKfycb.../exec"
 ```
+
+---
+
+## ข้อควรระวังสำคัญเพื่อไม่ให้ระบบขัดข้องบนอุปกรณ์อื่น
+1. **ต้องใช้ URL ที่ลงท้ายด้วย `/exec` เท่านั้น (ห้ามใช้ `/dev`):**
+   - URL `/dev` เป็น URL ทดสอบสำหรับนักพัฒนา ซึ่ง Google จะบังคับให้ต้องล็อกอินบัญชี Google ของเจ้าของสคริปต์ ทำให้โทรศัพท์หรือบุคคลอื่นไม่สามารถเรียกดูข้อมูลได้
+2. **สิทธิ์ Who has access ต้องเลือก "Anyone (ทุกคน)":**
+   - หากเลือกเป็น "Only myself" หรือ "Anyone with Google account" เบราว์เซอร์บนมือถือที่ไม่ล็อกอิน Google จะถูกบล็อกทันที
+3. **ห้ามพึ่งพา LocalStorage เพียงอย่างเดียว:**
+   - การบันทึก URL ใน LocalStorage จะมีผลเฉพาะเบราว์เซอร์เครื่องนั้นเท่านั้น ต้องบันทึกลง `public/app-config.json` หรือ `VITE_GAS_URL` เพื่อให้ทุกอุปกรณ์ใช้งานร่วมกันได้
 
 ---
 
