@@ -557,9 +557,33 @@ function saveSiteContentToSheet(content, token) {
 
   sheet.getRange('H2:O2').setValues([rowData]);
 
-  return {
-    success: true,
-    message: 'บันทึกข้อมูล CMS ลงคอลัมน์ H:O ของ Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตทันที',
-    updatedAt: new Date().toISOString(),
-  };
+  // สั่งบันทึกลงสเปรดชีตทันที (Force commit to Google Sheets)
+  SpreadsheetApp.flush();
+
+  // ตรวจสอบความถูกต้องโดยการอ่านข้อมูลกลับจากชีตจริง (Verification Read-back)
+  var verifyValue = sheet.getRange('L2').getValue();
+  if (!verifyValue) {
+    return {
+      success: false,
+      verified: false,
+      message: 'การบันทึกลง Google Sheets ไม่สำเร็จ: ไม่พบข้อมูลที่เขียนลงในคอลัมน์ L2',
+    };
+  }
+
+  try {
+    var verifiedObj = JSON.parse(verifyValue);
+    return {
+      success: true,
+      verified: true,
+      version: verifiedObj.version || content.version || 1,
+      message: 'บันทึกข้อมูลถาวรลง Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตตรงกัน',
+      updatedAt: rowData[7],
+    };
+  } catch (err) {
+    return {
+      success: false,
+      verified: false,
+      message: 'การบันทึกลง Google Sheets ไม่สมบูรณ์: ไม่สามารถตรวจสอบโครงสร้าง JSON ที่บันทึกได้',
+    };
+  }
 }

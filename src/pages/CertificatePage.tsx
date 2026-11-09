@@ -48,10 +48,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
       });
 
       if (!response.isBackendConnected) {
-        setErrorMessage(
-          response.message ||
-            'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API Gateway'
-        );
+        setErrorMessage('ระบบยังไม่สามารถเชื่อมต่อฐานข้อมูลได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแลระบบ');
         return;
       }
 
@@ -69,7 +66,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
         setErrorMessage(response.message || 'ไม่พบข้อมูลที่ตรงกับการค้นหา');
       }
     } catch (err: any) {
-      setErrorMessage(`เกิดข้อผิดพลาดในการค้นหา: ${err?.message || 'Network error'}`);
+      setErrorMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSearching(false);
     }
@@ -126,24 +123,6 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
           ค้นหาและดาวน์โหลดเกียรติบัตรจากแผ่นงาน &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot;
         </p>
       </div>
-
-      {/* Backend Status Advisory if not connected */}
-      {!isBackendConnected && (
-        <div className="max-w-3xl mx-auto mb-8 bg-amber-50/80 border border-amber-300 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-xs sm:text-sm text-amber-900 font-['Sarabun']">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-['Prompt'] font-semibold text-amber-950">
-              สถานะ: รอการตั้งค่า Google Apps Script Web App URL
-            </div>
-            <p>
-              ระบบการดาวน์โหลดเกียรติบัตรจะอ่านค่าระดับเหรียญจากคอลัมน์ E และลิงก์ไฟล์เกียรติบัตรจากคอลัมน์ F ของแผ่นงาน &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot; โดยตรงผ่าน Google Apps Script (Code.gs)
-            </p>
-            <p className="text-amber-800 text-[11px] pt-1">
-              ผู้ดูแลระบบสามารถระบุ Web App URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong>
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Search Input Box */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-10">

@@ -47,10 +47,7 @@ export const ScorePage: React.FC<ScorePageProps> = ({
       });
 
       if (!response.isBackendConnected) {
-        setErrorMessage(
-          response.message ||
-            'ยังไม่ได้เชื่อมต่อฐานข้อมูล Google Sheets ผ่าน Cloudflare Worker API'
-        );
+        setErrorMessage('ระบบยังไม่สามารถเชื่อมต่อฐานข้อมูลได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแลระบบ');
         return;
       }
 
@@ -69,7 +66,7 @@ export const ScorePage: React.FC<ScorePageProps> = ({
         setErrorMessage(response.message || 'ไม่พบข้อมูลที่ตรงกับการค้นหา');
       }
     } catch (err: any) {
-      setErrorMessage(`เกิดข้อผิดพลาดในการค้นหา: ${err?.message || 'Network error'}`);
+      setErrorMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSearching(false);
     }
@@ -100,24 +97,6 @@ export const ScorePage: React.FC<ScorePageProps> = ({
           ค้นหาคะแนนสอบและผลการประเมินจากแผ่นงาน &quot;{APP_CONFIG.SCORE_SHEET}&quot;
         </p>
       </div>
-
-      {/* Backend Status Advisory if not connected */}
-      {!isBackendConnected && (
-        <div className="max-w-3xl mx-auto mb-8 bg-amber-50/80 border border-amber-300 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-xs sm:text-sm text-amber-900 font-['Sarabun']">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-['Prompt'] font-semibold text-amber-950">
-              สถานะ: ยังไม่ได้เชื่อมต่อ Google Apps Script Web App
-            </div>
-            <p>
-              ระบบการค้นหาจริงเชื่อมต่อกับ Google Sheets ID: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">{APP_CONFIG.SPREADSHEET_ID}</code> ผ่าน Google Apps Script Web App (Code.gs) ด้วยคำสั่ง <code>SpreadsheetApp.openById()</code> โดยตรง
-            </p>
-            <p className="text-amber-800 text-[11px] pt-1">
-              แอดมินสามารถกำหนด Web App URL ได้ที่เมนู <strong>&quot;สำหรับแอดมิน&quot;</strong> หรือดูคู่มือการตั้งค่าใน <code>docs/GOOGLE_APPS_SCRIPT.md</code>
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Search Input Box */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-10">

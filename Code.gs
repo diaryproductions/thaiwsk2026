@@ -107,6 +107,7 @@ function doPost(e) {
       try {
         data = JSON.parse(e.postData.contents);
       } catch (err) {
+        // หากส่งมาเป็น URL encoded หรือ text ธรรมดา
         data = e.parameter || {};
       }
     } else if (e && e.parameter) {
@@ -234,6 +235,7 @@ function searchScoreData(query, gradeFilter, roomFilter) {
     };
   }
 
+  // อ่านข้อมูล A:F (แถวที่ 2 ถึงแถวสุดท้าย)
   var range = sheet.getRange(2, 1, lastRow - 1, 6);
   var values = range.getValues();
 
@@ -247,13 +249,19 @@ function searchScoreData(query, gradeFilter, roomFilter) {
     var grade = String(row[2] || '').trim();
     var room = String(row[3] || '').trim();
     var score = row[4] !== undefined && row[4] !== null ? row[4] : '';
-    var evaluation = String(row[5] || '').trim();
+    var evaluation = String(row[5] || '').trim(); // ผลการประเมินคอลัมน์ F โดยตรง
 
     var normalizedName = normalizeThai(fullName);
 
     if (normalizedName.indexOf(normalizedQuery) !== -1) {
-      if (gradeFilter && String(grade).indexOf(gradeFilter) === -1) continue;
-      if (roomFilter && String(room).indexOf(roomFilter) === -1) continue;
+      // ตรวจสอบตัวกรองระดับชั้น
+      if (gradeFilter && String(grade).indexOf(gradeFilter) === -1) {
+        continue;
+      }
+      // ตรวจสอบตัวกรองห้อง
+      if (roomFilter && String(room).indexOf(roomFilter) === -1) {
+        continue;
+      }
 
       matches.push({
         number: number,
@@ -266,6 +274,7 @@ function searchScoreData(query, gradeFilter, roomFilter) {
     }
   }
 
+  // ป้องกันการค้นหาที่กว้างเกินไป หากมีชื่อคล้ายกันมากกว่า 2 คน
   if (matches.length > 2 && (!gradeFilter || !roomFilter)) {
     return {
       success: false,
@@ -330,10 +339,12 @@ function searchCertificateData(query, gradeFilter, roomFilter) {
     var fullName = String(row[1] || '').trim();
     var grade = String(row[2] || '').trim();
     var room = String(row[3] || '').trim();
-    var medal = String(row[4] || '').trim();
+    var medal = String(row[4] || '').trim(); // Col E: ระดับเหรียญ
     
+    // ดึง URL จาก Col F (รองรับ Formula, Rich Text, หรือ Plain URL)
     var rawUrl = '';
     
+    // 1. ตรวจสอบสูตร =HYPERLINK("...", "...")
     var formulaF = formulas[i] ? formulas[i][5] : '';
     if (formulaF) {
       var matchFormula = formulaF.match(/HYPERLINK\(\s*["']([^"']+)["']/i);
@@ -342,6 +353,7 @@ function searchCertificateData(query, gradeFilter, roomFilter) {
       }
     }
 
+    // 2. ตรวจสอบ Rich Text Link
     if (!rawUrl && richText && richText[i] && richText[i][5]) {
       var rtLink = richText[i][5].getLinkUrl();
       if (rtLink) {
@@ -349,6 +361,7 @@ function searchCertificateData(query, gradeFilter, roomFilter) {
       }
     }
 
+    // 3. ตรวจสอบข้อความ Plain Text
     if (!rawUrl && row[5]) {
       var cellText = String(row[5]).trim();
       var urlMatch = cellText.match(/https?:\/\/[^\s"'<>]+/);
@@ -443,12 +456,13 @@ function getSiteContentFromSheet() {
       return { success: true, isFromBackend: false, message: 'ยังไม่มีข้อมูล CMS' };
     }
 
+    // ตรวจสอบคอลัมน์ H:O (แถว 2)
     var cmsRange = sheet.getRange(2, 8, Math.min(lastRow - 1, 10), 8);
     var values = cmsRange.getValues();
 
     for (var i = 0; i < values.length; i++) {
-      var key = values[i][3];
-      var valJson = values[i][4];
+      var key = values[i][3]; // Col K: CMS_KEY
+      var valJson = values[i][4]; // Col L: CMS_VALUE_JSON
       if (key === 'SITE_CONTENT_MASTER' && valJson) {
         var parsed = JSON.parse(valJson);
         return {
@@ -513,6 +527,7 @@ function saveSiteContentToSheet(content, token) {
     return { success: false, message: 'ไม่พบแผ่นงาน "' + SCORE_SHEET + '"' };
   }
 
+  // กำหนดหัวตาราง H1:O1 หากยังไม่มี
   var headerRange = sheet.getRange('H1:O1');
   var currentHeaders = headerRange.getValues()[0];
   if (!currentHeaders[0]) {
@@ -528,6 +543,7 @@ function saveSiteContentToSheet(content, token) {
     ]]);
   }
 
+  // บันทึกลง H2:O2
   var rowData = [
     'CMS_01',
     'MASTER',
@@ -541,9 +557,33 @@ function saveSiteContentToSheet(content, token) {
 
   sheet.getRange('H2:O2').setValues([rowData]);
 
-  return {
-    success: true,
-    message: 'บันทึกข้อมูล CMS ลงคอลัมน์ H:O ของ Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตทันที',
-    updatedAt: new Date().toISOString(),
-  };
+  // สั่งบันทึกลงสเปรดชีตทันที (Force commit to Google Sheets)
+  SpreadsheetApp.flush();
+
+  // ตรวจสอบความถูกต้องโดยการอ่านข้อมูลกลับจากชีตจริง (Verification Read-back)
+  var verifyValue = sheet.getRange('L2').getValue();
+  if (!verifyValue) {
+    return {
+      success: false,
+      verified: false,
+      message: 'การบันทึกลง Google Sheets ไม่สำเร็จ: ไม่พบข้อมูลที่เขียนลงในคอลัมน์ L2',
+    };
+  }
+
+  try {
+    var verifiedObj = JSON.parse(verifyValue);
+    return {
+      success: true,
+      verified: true,
+      version: verifiedObj.version || content.version || 1,
+      message: 'บันทึกข้อมูลถาวรลง Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตตรงกัน',
+      updatedAt: rowData[7],
+    };
+  } catch (err) {
+    return {
+      success: false,
+      verified: false,
+      message: 'การบันทึกลง Google Sheets ไม่สมบูรณ์: ไม่สามารถตรวจสอบโครงสร้าง JSON ที่บันทึกได้',
+    };
+  }
 }

@@ -4,22 +4,8 @@ import { fetchSiteContent, getApiBaseUrl } from '../services/api';
 import { APP_CONFIG } from '../config/constants';
 
 export function useSiteContent() {
-  const [content, setContent] = useState<SiteContent>(() => {
-    // Check localStorage for offline cached version if available
-    try {
-      const cached = localStorage.getItem('thai_wsk_site_content');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && parsed.version) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return DEFAULT_SITE_CONTENT;
-  });
-
+  // Always initialize from default master content (NEVER use localStorage as primary database)
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -27,6 +13,15 @@ export function useSiteContent() {
   const [syncError, setSyncError] = useState<string | null>(null);
 
   const isMountedRef = useRef(true);
+
+  // Clean up any legacy localStorage content to prevent stale local overrides
+  useEffect(() => {
+    try {
+      localStorage.removeItem('thai_wsk_site_content');
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const loadContent = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -36,10 +31,11 @@ export function useSiteContent() {
       const baseUrl = getApiBaseUrl();
       if (!baseUrl) {
         setIsBackendConnected(false);
-        setSyncError('ยังไม่ได้ระบุ Backend URL');
+        setSyncError('ยังไม่ได้ระบุ Google Apps Script Web App URL');
         return;
       }
 
+      // Always fetch latest from Central Database (Google Sheets via Apps Script)
       const result = await fetchSiteContent();
       if (!isMountedRef.current) return;
 
@@ -48,14 +44,9 @@ export function useSiteContent() {
         setIsBackendConnected(result.isFromBackend);
         setLastSyncTime(new Date());
         setSyncError(null);
-        try {
-          localStorage.setItem('thai_wsk_site_content', JSON.stringify(result.content));
-        } catch (e) {
-          // ignore storage quota error
-        }
       } else {
         setIsBackendConnected(false);
-        setSyncError(result.message || 'ไม่สามารถโหลดข้อมูลจากเซิร์ฟเวอร์');
+        setSyncError(result.message || 'ไม่สามารถโหลดข้อมูลจากฐานข้อมูลกลาง');
       }
     } catch (err: any) {
       if (!isMountedRef.current) return;
@@ -69,17 +60,17 @@ export function useSiteContent() {
     }
   }, []);
 
-  // Initial load
+  // Initial load on startup
   useEffect(() => {
     isMountedRef.current = true;
     loadContent(false);
 
-    // Periodic polling (Part 7: 15–30 seconds)
+    // Periodic polling (every 15–20s) to keep all devices synchronized without redeployment
     const interval = setInterval(() => {
       loadContent(true);
     }, APP_CONFIG.POLLING_INTERVAL_MS);
 
-    // Also reload when user switches back to tab (visibilitychange)
+    // Reload when user switches back to window/tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         loadContent(true);
@@ -94,13 +85,11 @@ export function useSiteContent() {
     };
   }, [loadContent]);
 
-  const updateContentLocally = useCallback((newContent: SiteContent) => {
+  // Update content in React state only after central database confirmation
+  const setSyncedContent = useCallback((newContent: SiteContent) => {
     setContent(newContent);
-    try {
-      localStorage.setItem('thai_wsk_site_content', JSON.stringify(newContent));
-    } catch (e) {
-      // ignore
-    }
+    setLastSyncTime(new Date());
+    setIsBackendConnected(true);
   }, []);
 
   return {
@@ -111,6 +100,7 @@ export function useSiteContent() {
     lastSyncTime,
     syncError,
     refreshContent: () => loadContent(false),
-    updateContentLocally,
+    setSyncedContent,
+    updateContentLocally: setSyncedContent,
   };
 }

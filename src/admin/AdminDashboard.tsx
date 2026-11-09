@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { SiteContent, HeroSlide, AwardCriterion, ScheduleItem, AnnouncementItem } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
-import { saveSiteContent, getApiBaseUrl, setApiBaseUrl, checkBackendHealth, setAdminToken } from '../services/api';
+import { saveSiteContent, getApiBaseUrl, setApiBaseUrl, checkBackendHealth, getAdminToken, setAdminToken } from '../services/api';
 
 interface AdminDashboardProps {
   content: SiteContent;
@@ -90,6 +90,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
     setSaveStatus(null);
 
+    const baseUrl = getApiBaseUrl();
+    if (!baseUrl) {
+      setSaveStatus({
+        type: 'error',
+        message:
+          'ไม่สามารถบันทึกข้อมูลได้: ยังไม่ได้ระบุ Google Apps Script Web App URL กรุณาไปที่แท็บ "ฐานข้อมูล & Google Apps Script" เพื่อระบุ Web App URL ก่อนบันทึกข้อมูลถาวร',
+      });
+      setIsSaving(false);
+      return;
+    }
+
+    const token = getAdminToken();
+    if (!token) {
+      setSaveStatus({
+        type: 'error',
+        message: 'เซสชันแอดมินหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+      });
+      setIsSaving(false);
+      return;
+    }
+
     const updatedData: SiteContent = {
       ...formData,
       version: (formData.version || 1) + 1,
@@ -97,38 +118,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
 
     try {
-      // 1. Update locally right away for instantaneous admin response
-      onUpdateContentLocally(updatedData);
-
-      // 2. If backend is configured, persist to Google Sheets columns H:O
-      const baseUrl = getApiBaseUrl();
-      if (!baseUrl) {
+      // Persist directly to Google Sheets columns H:O via Google Apps Script (Code.gs)
+      const res = await saveSiteContent(updatedData);
+      if (res.success && res.verified) {
+        // Only update display once confirmed and read back from Google Sheets
+        const verifiedData = res.verifiedContent || updatedData;
+        setFormData(verifiedData);
+        onUpdateContentLocally(verifiedData);
         setSaveStatus({
           type: 'success',
           message:
-            'บันทึกการแก้ไขลงหน่วยความจำชั่วคราว (Preview Mode) เรียบร้อยแล้ว (กรุณาระบุ Backend URL ในแท็บ "ฐานข้อมูล & API" เพื่อซิงค์ลง Google Sheets สำหรับทุกอุปกรณ์)',
-        });
-        setIsSaving(false);
-        return;
-      }
-
-      const res = await saveSiteContent(updatedData);
-      if (res.success) {
-        setSaveStatus({
-          type: 'success',
-          message: res.message || 'บันทึกข้อมูลลง Google Sheets สำเร็จ และอัปเดตทุกอุปกรณ์แล้ว',
+            res.message ||
+            'บันทึกข้อมูลถาวรลง Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตตรงกัน',
         });
         refreshContent();
       } else {
         setSaveStatus({
           type: 'error',
-          message: res.message || 'ไม่สามารถบันทึกลง Google Sheets ได้',
+          message:
+            res.message ||
+            'ไม่สามารถบันทึกข้อมูลลง Google Sheets ได้ (การตรวจสอบข้อมูลล้มเหลว)',
         });
       }
     } catch (err: any) {
       setSaveStatus({
         type: 'error',
-        message: `ข้อผิดพลาด: ${err?.message}`,
+        message: `ข้อผิดพลาดในการบันทึกลง Google Sheets: ${err?.message || 'ไม่ทราบสาเหตุ'}`,
       });
     } finally {
       setIsSaving(false);
@@ -1336,7 +1351,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'database' && (
             <div className="space-y-6">
               <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D] border-b pb-3">
-                การตั้งค่าฐานข้อมูล Google Sheets &amp; Cloudflare Worker API
+                การตั้งค่าฐานข้อมูล Google Sheets &amp; Google Apps Script
               </h3>
 
               {/* Database Verification Card */}

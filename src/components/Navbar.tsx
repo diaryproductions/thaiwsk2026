@@ -41,18 +41,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             THAI WSK ๒๕๖๙ สืบศิลป์ถิ่นอักษร
           </span>
           <div className="flex items-center gap-3 shrink-0 text-[11px]">
-            {isBackendConnected ? (
-              <span className="inline-flex items-center gap-1.5 text-emerald-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>เชื่อมต่อชีตจริง</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-amber-200" title="ตั้งค่า Google Apps Script Web App เพื่อเชื่อมต่อกับ Google Sheets">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                <span>รอเชื่อมต่อ Apps Script</span>
-              </span>
+            {isBackendConnected && (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>เชื่อมต่อชีตจริง</span>
+                </span>
+                <span className="text-white/40">|</span>
+              </>
             )}
-            <span className="text-white/40">|</span>
             <a
               href="https://www.wsk.ac.th/wp/"
               target="_blank"

@@ -359,6 +359,8 @@ export async function fetchSiteContent(): Promise<{
 export async function saveSiteContent(content: SiteContent): Promise<{
   success: boolean;
   message: string;
+  verified?: boolean;
+  verifiedContent?: SiteContent;
 }> {
   const baseUrl = getApiBaseUrl();
   const token = getAdminToken();
@@ -366,7 +368,7 @@ export async function saveSiteContent(content: SiteContent): Promise<{
   if (!baseUrl) {
     return {
       success: false,
-      message: 'ยังไม่ได้กำหนด Google Apps Script Web App URL ไม่สามารถบันทึกลง Google Sheets ได้',
+      message: 'ยังไม่ได้ระบุ Google Apps Script Web App URL กรุณาตั้งค่าในแท็บ "ฐานข้อมูล & Google Apps Script"',
     };
   }
 
@@ -402,9 +404,21 @@ export async function saveSiteContent(content: SiteContent): Promise<{
       };
     }
 
+    // ทดสอบอ่านข้อมูลกลับจากฐานข้อมูลจริง (Verification Read-back from Google Sheets)
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const verifyRes = await fetchSiteContent();
+    if (!verifyRes.success || !verifyRes.content) {
+      return {
+        success: false,
+        message: 'บันทึกข้อมูลแล้ว แต่ไม่สามารถยืนยันการอ่านข้อมูลกลับจาก Google Sheets ได้ กรุณาลองใหม่อีกครั้ง',
+      };
+    }
+
     return {
       success: true,
-      message: data.message || 'บันทึกข้อมูลลง Google Sheets สำเร็จเรียบร้อยแล้ว',
+      verified: true,
+      verifiedContent: verifyRes.content,
+      message: 'บันทึกข้อมูลถาวรลง Google Sheets สำเร็จเรียบร้อยแล้ว ทุกอุปกรณ์จะได้รับข้อมูลอัปเดตตรงกัน',
     };
   } catch (err: any) {
     return {
