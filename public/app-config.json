@@ -1,10 +1,10 @@
 {
-  "gasWebAppUrl": "https://script.google.com/macros/s/AKfycbwTU0mnzcMCvgCkO07yjyxFHoI4SUvYcNFZyB0pdArGd0DQTB3hK60c6RYkPs-8oGZqRQ/exec",
+  "gasWebAppUrl": "https://script.google.com/macros/s/AKfycbwBBDRrEg6NwBGqF28VTFwBqF8cnjB584syd5YZ1Wh8gI9oJu4QX_vDPcw0bs33GEIphA/exec",
   "spreadsheetId": "1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI",
   "scoreSheet": "ตรวจสอบคะแนน",
   "certificateSheet": "ดาวน์โหลดเกียรติบัตร",
   "maxScoreDefault": 20,
   "pollingIntervalMs": 20000,
   "appName": "THAI WSK 2026",
-  "lastUpdated": "2026-11-09T12:39:22.527Z"
+  "lastUpdated": "2026-11-13T06:31:45.195Z"
 }
