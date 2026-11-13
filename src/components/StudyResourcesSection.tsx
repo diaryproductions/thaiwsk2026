@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { StudyMaterial } from '../config/defaultContent';
 import { extractYouTubeId } from '../utils/imageUrl';
+import { ThaiOrnament } from './ThaiOrnament';
 
 interface StudyResourcesSectionProps {
   materials: StudyMaterial[];
@@ -66,37 +67,39 @@ export const StudyResourcesSection: React.FC<StudyResourcesSectionProps> = ({ ma
   return (
     <section
       id="study-resources"
-      className="py-14 sm:py-16 px-4 max-w-7xl mx-auto"
+      className="py-14 sm:py-16 px-4 bg-white border-y border-[#D6AF55]/25"
     >
-      {/* Section Header */}
-      <div className="max-w-3xl mx-auto text-center mb-10 space-y-2.5">
-        <p className="text-xs font-['Prompt'] font-semibold tracking-wider text-[#7043A6]">
-          คลังสื่อการเรียนรู้และเตรียมความพร้อม
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-['Prompt'] font-bold text-[#4B267D] tracking-tight text-balance">
-          ศึกษาและทบทวนความรู้ด้านภาษาไทย
-        </h2>
-        <p className="text-sm sm:text-base font-['Sarabun'] text-slate-600 leading-relaxed">
-          แหล่งเรียนรู้และทบทวนความรู้ด้านภาษาไทย เพื่อเตรียมความพร้อมก่อนเข้าร่วมการทดสอบความรู้ความสามารถด้านภาษาไทย
-        </p>
-      </div>
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <div className="max-w-3xl mx-auto text-center mb-10 space-y-2.5">
+          <p className="text-xs font-['Prompt'] font-semibold tracking-wider text-[#7043A6]">
+            คลังสื่อการเรียนรู้และเตรียมความพร้อม
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-['Prompt'] font-bold text-[#4B267D] tracking-tight text-balance">
+            ศึกษาและทบทวนความรู้ด้านภาษาไทย
+          </h2>
+          <ThaiOrnament className="py-1" />
+          <p className="text-sm sm:text-base font-['Sarabun'] text-slate-600 leading-relaxed">
+            แหล่งเรียนรู้และทบทวนความรู้ด้านภาษาไทย เพื่อเตรียมความพร้อมก่อนเข้าร่วมการทดสอบความรู้ความสามารถด้านภาษาไทย
+          </p>
+        </div>
 
-      {/* Two Modern Academic Category Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {categories.map((cat) => {
-          const isSelected = selectedLevel === cat.id;
-          const pdfCount = cat.items.filter((m) => m.type === 'pdf').length;
-          const ytCount = cat.items.filter((m) => m.type === 'youtube').length;
+        {/* Two Modern Academic Category Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {categories.map((cat) => {
+            const isSelected = selectedLevel === cat.id;
+            const pdfCount = cat.items.filter((m) => m.type === 'pdf').length;
+            const ytCount = cat.items.filter((m) => m.type === 'youtube').length;
 
-          return (
-            <div
-              key={cat.id}
-              className={`bg-white rounded-2xl p-6 sm:p-7 border transition-all duration-200 flex flex-col justify-between ${
-                isSelected
-                  ? 'border-[#4B267D] shadow-md ring-1 ring-[#4B267D]/15'
-                  : 'border-slate-200 hover:border-[#D6AF55] shadow-xs hover:shadow-md'
-              }`}
-            >
+            return (
+              <div
+                key={cat.id}
+                className={`bg-[#FAF8FD]/55 rounded-2xl p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between hover:-translate-y-0.5 ${
+                  isSelected
+                    ? 'border-[#4B267D] bg-white shadow-md ring-1 ring-[#D6AF55]/45'
+                    : 'border-[#D6AF55]/30 hover:border-[#D6AF55] shadow-xs hover:shadow-md hover:bg-white'
+                }`}
+              >
               <div>
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="w-12 h-12 rounded-xl bg-[#FAF8FD] border border-[#7043A6]/20 flex items-center justify-center shrink-0">
@@ -317,6 +320,7 @@ export const StudyResourcesSection: React.FC<StudyResourcesSectionProps> = ({ ma
           )}
         </div>
       )}
+      </div>
     </section>
   );
 };

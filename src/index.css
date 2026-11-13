@@ -1,1 +1,72 @@
 @import "tailwindcss";
+
+@keyframes wskFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wskFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-wsk-fade-in {
+  animation: wskFadeIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-wsk-fade-up {
+  animation: wskFadeUp 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-wsk-delay-1 {
+  animation-delay: 80ms;
+}
+
+.animate-wsk-delay-2 {
+  animation-delay: 160ms;
+}
+
+.animate-wsk-delay-3 {
+  animation-delay: 240ms;
+}
+
+.reveal-base {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wsk-fade-in,
+  .animate-wsk-fade-up,
+  .animate-wsk-delay-1,
+  .animate-wsk-delay-2,
+  .animate-wsk-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .reveal-base,
+  .reveal-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

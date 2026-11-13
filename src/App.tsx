@@ -56,6 +56,13 @@ export default function App() {
     handleSelectTab('home');
   };
 
+  const headerLogoItem = (content.siteImageItems || []).find(
+    (img) => img.section === 'headerLogo'
+  );
+  const resolvedHeaderLogoUrl =
+    (headerLogoItem?.url && headerLogoItem.url.trim()) || content.siteImages?.headerLogoUrl;
+  const showHeaderLogo = headerLogoItem ? headerLogoItem.isVisible !== false : true;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8FD] text-[#30283A] font-['Sarabun']">
       {/* Top Navbar */}
@@ -63,7 +70,8 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={handleSelectTab}
         isBackendConnected={isBackendConnected}
-        logoUrl={content.siteImages?.headerLogoUrl}
+        logoUrl={resolvedHeaderLogoUrl}
+        showLogo={showHeaderLogo}
       />
 
       {/* Main Page Content */}

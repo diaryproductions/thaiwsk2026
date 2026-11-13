@@ -854,3 +854,176 @@ export async function adminLogin(credentials: {
     };
   }
 }
+
+export interface AdminCertificateItem extends CertificateSearchResult {
+  rowIndex?: number;
+  driveId?: string;
+}
+
+/**
+ * Fetch all certificates from sheet 'ดาวน์โหลดเกียรติบัตร'!A:F (Admin Only)
+ */
+export async function listAllCertificatesAdmin(): Promise<{
+  success: boolean;
+  data?: AdminCertificateItem[];
+  total?: number;
+  errorType?: 'NO_CONFIG' | 'AUTH_EXPIRED' | 'UPDATE_GAS_REQUIRED' | 'NETWORK_ERROR' | 'UNKNOWN';
+  message?: string;
+}> {
+  await initSharedConfig();
+  const baseUrl = getApiBaseUrl();
+  const token = getAdminToken();
+
+  if (!baseUrl) {
+    return {
+      success: false,
+      errorType: 'NO_CONFIG',
+      message: 'ยังไม่ได้ระบุ Google Apps Script Web App URL กรุณาตั้งค่าในแท็บ "ฐานข้อมูล & Google Apps Script"',
+    };
+  }
+
+  if (!token) {
+    return {
+      success: false,
+      errorType: 'AUTH_EXPIRED',
+      message: 'เซสชันแอดมินหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
+
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action: 'listCertificates',
+        token,
+      }),
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const text = await res.text();
+    if (text.includes('<html') || text.includes('accounts.google.com')) {
+      return {
+        success: false,
+        errorType: 'AUTH_EXPIRED',
+        message: 'Google Apps Script ติดสิทธิ์การเข้าถึง กรุณาตรวจสอบว่า Deploy สิทธิ์เป็น Anyone',
+      };
+    }
+
+    const data = JSON.parse(text);
+    if (!data.success && typeof data.message === 'string' && data.message.includes('ไม่พบ Action ที่ร้องขอ')) {
+      return {
+        success: false,
+        errorType: 'UPDATE_GAS_REQUIRED',
+        message:
+          'Google Apps Script Web App ที่ Deploy อยู่ยังเป็นเวอร์ชันเก่า กรุณาอัปเดตโค้ด Code.gs และ Deploy New Version ใน Google Apps Script เพื่อเปิดใช้งานระบบจัดการและพิมพ์เกียรติบัตร',
+      };
+    }
+
+    if (data.authExpired) {
+      return {
+        success: false,
+        errorType: 'AUTH_EXPIRED',
+        message: data.message || 'เซสชันแอดมินหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+      };
+    }
+
+    return {
+      success: Boolean(data.success),
+      data: Array.isArray(data.data) ? data.data : [],
+      total: data.total || 0,
+      message: data.message,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      errorType: 'NETWORK_ERROR',
+      message: `ไม่สามารถดึงรายการเกียรติบัตรได้: ${err?.message || 'Network error'}`,
+    };
+  }
+}
+
+/**
+ * Fetch certificate PDF bytes (base64) via GAS proxy for admin PDF merging
+ */
+export async function fetchCertificatePdfBase64Admin(url: string): Promise<{
+  success: boolean;
+  base64?: string;
+  fileName?: string;
+  byteSize?: number;
+  errorType?: string;
+  message?: string;
+}> {
+  await initSharedConfig();
+  const baseUrl = getApiBaseUrl();
+  const token = getAdminToken();
+
+  if (!baseUrl) {
+    return {
+      success: false,
+      errorType: 'NO_CONFIG',
+      message: 'ยังไม่ได้ระบุ Google Apps Script Web App URL',
+    };
+  }
+  if (!token) {
+    return {
+      success: false,
+      errorType: 'AUTH_REQUIRED',
+      message: 'เซสชันแอดมินหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action: 'fetchCertificatePdf',
+        token,
+        url,
+      }),
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const text = await res.text();
+    if (text.includes('<html') || text.includes('accounts.google.com')) {
+      return {
+        success: false,
+        errorType: 'AUTH_REQUIRED',
+        message: 'ติดสิทธิ์เข้าสู่ระบบ Google Apps Script',
+      };
+    }
+
+    const data = JSON.parse(text);
+    if (!data.success && typeof data.message === 'string' && data.message.includes('ไม่พบ Action ที่ร้องขอ')) {
+      return {
+        success: false,
+        errorType: 'UPDATE_GAS_REQUIRED',
+        message: 'กรุณาอัปเดตและ Deploy โค้ด Code.gs เวอร์ชันใหม่ใน Google Apps Script ก่อนใช้งานรวมไฟล์ PDF',
+      };
+    }
+
+    return data;
+  } catch (err: any) {
+    return {
+      success: false,
+      errorType: err?.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK_ERROR',
+      message: err?.name === 'AbortError' ? 'หมดเวลาการดึงไฟล์ PDF (Timeout)' : (err?.message || 'เกิดข้อผิดพลาดเครือข่าย'),
+    };
+  }
+}
+

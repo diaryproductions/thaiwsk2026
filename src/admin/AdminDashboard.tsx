@@ -36,6 +36,7 @@ import {
   ArrowDown,
   EyeOff,
   PlayCircle,
+  Printer,
 } from 'lucide-react';
 import {
   SiteContent,
@@ -45,11 +46,15 @@ import {
   AnnouncementItem,
   StudyMaterial,
   DEFAULT_SITE_CONTENT,
+  DEFAULT_SITE_IMAGE_ITEMS,
   SiteImages,
+  ManagedSiteImage,
 } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
 import { SmartImage } from '../components/SmartImage';
 import { isViewerPageUrl, extractYouTubeId } from '../utils/imageUrl';
+import { AdminCertificateManager } from './AdminCertificateManager';
+import { AdminImageLayoutManager } from './AdminImageLayoutManager';
 import {
   saveSiteContent,
   getApiBaseUrl,
@@ -74,6 +79,7 @@ interface AdminDashboardProps {
 
 type AdminSection =
   | 'meta'
+  | 'certificates'
   | 'study'
   | 'media'
   | 'slides'
@@ -96,12 +102,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<AdminSection>('meta');
   const [studyLevelFilter, setStudyLevelFilter] = useState<'all' | 'junior' | 'senior'>('all');
   const [previewStudyId, setPreviewStudyId] = useState<string | null>(null);
+  const [copiedAssetUrl, setCopiedAssetUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<SiteContent>(() => {
     const copy: SiteContent = JSON.parse(JSON.stringify(content));
     copy.siteImages = {
       ...DEFAULT_SITE_CONTENT.siteImages,
       ...(copy.siteImages || {}),
     };
+    copy.siteImageItems =
+      Array.isArray(copy.siteImageItems) && copy.siteImageItems.length > 0
+        ? copy.siteImageItems
+        : JSON.parse(JSON.stringify(DEFAULT_SITE_IMAGE_ITEMS));
     copy.studyMaterials = Array.isArray(copy.studyMaterials) ? copy.studyMaterials : [];
     if (!copy.about.teacherImageUrl) {
       copy.about.teacherImageUrl = 'images/thai_teacher_team_2026.png';
@@ -232,6 +243,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ...DEFAULT_SITE_CONTENT.siteImages,
             ...((res.verifiedContent || updatedData).siteImages || {}),
           },
+          siteImageItems:
+            Array.isArray((res.verifiedContent || updatedData).siteImageItems) &&
+            (res.verifiedContent || updatedData).siteImageItems!.length > 0
+              ? (res.verifiedContent || updatedData).siteImageItems
+              : DEFAULT_SITE_IMAGE_ITEMS,
           studyMaterials: Array.isArray((res.verifiedContent || updatedData).studyMaterials)
             ? (res.verifiedContent || updatedData).studyMaterials
             : [],
@@ -474,6 +490,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-2 space-y-1 font-['Prompt'] text-xs sm:text-sm shadow-xs">
           {[
             { id: 'meta' as AdminSection, label: 'ข้อมูลทั่วไป & Countdown', icon: Globe },
+            { id: 'certificates' as AdminSection, label: 'จัดการและพิมพ์เกียรติบัตร', icon: Printer },
             { id: 'study' as AdminSection, label: 'จัดการสื่อศึกษาและทบทวนความรู้', icon: GraduationCap },
             { id: 'media' as AdminSection, label: 'จัดการรูปภาพทุกจุด (Media)', icon: Camera },
             { id: 'slides' as AdminSection, label: 'ส่วนหัวเว็บไซต์ (Hero Banner)', icon: Image },
@@ -603,6 +620,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
           )}
+
+          {/* TAB: CERTIFICATES MANAGEMENT & BATCH PDF PRINT */}
+          {activeTab === 'certificates' && <AdminCertificateManager />}
 
           {/* TAB: STUDY RESOURCES MANAGEMENT */}
           {activeTab === 'study' && (() => {
@@ -1050,12 +1070,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(asset.url);
-                            alert(`คัดลอก URL: ${asset.url} เรียบร้อยแล้ว`);
+                            setCopiedAssetUrl(asset.url);
+                            setTimeout(() => setCopiedAssetUrl(null), 2500);
                           }}
-                          className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1"
+                          className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <Copy className="w-3 h-3" />
-                          <span>คัดลอก</span>
+                          {copiedAssetUrl === asset.url ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedAssetUrl === asset.url ? 'คัดลอกแล้ว' : 'คัดลอก'}</span>
                         </button>
 
                         <button
@@ -1087,6 +1112,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* SECTION A2: DYNAMIC IMAGE & LAYOUT MANAGER */}
+              <AdminImageLayoutManager
+                items={formData.siteImageItems || DEFAULT_SITE_IMAGE_ITEMS}
+                onChange={(nextItems: ManagedSiteImage[]) => {
+                  const heroItem = nextItems.find((i) => i.id === 'img-hero-logo' || i.section === 'heroLogo');
+                  const headerItem = nextItems.find((i) => i.id === 'img-header-logo' || i.section === 'headerLogo');
+                  setFormData({
+                    ...formData,
+                    siteImageItems: nextItems,
+                    siteImages: {
+                      ...formData.siteImages,
+                      ...(heroItem ? { heroLogoUrl: heroItem.url } : {}),
+                      ...(headerItem ? { headerLogoUrl: headerItem.url } : {}),
+                    },
+                  });
+                }}
+              />
 
               {/* SECTION B: PLACEMENT IMAGE CONTROLS WITH LIVE PREVIEW */}
               <div className="space-y-6">

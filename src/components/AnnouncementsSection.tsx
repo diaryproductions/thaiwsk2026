@@ -1,14 +1,17 @@
 import React from 'react';
 import { Bell, Pin, User, Calendar } from 'lucide-react';
-import { AnnouncementItem } from '../config/defaultContent';
+import { AnnouncementItem, ManagedSiteImage } from '../config/defaultContent';
 import { SmartImage } from './SmartImage';
+import { DynamicSectionImages } from './DynamicSectionImages';
 
 interface AnnouncementsSectionProps {
   announcements: AnnouncementItem[];
+  managedImages?: ManagedSiteImage[];
 }
 
 export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
   announcements,
+  managedImages,
 }) => {
   const activeItems = (announcements || [])
     .filter((a) => a.isActive)
@@ -21,12 +24,12 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
   if (activeItems.length === 0) return null;
 
   return (
-    <section className="py-14 px-4 bg-white border-t border-slate-100">
+    <section className="py-14 px-4 bg-white border-t border-[#D6AF55]/30">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-[#D6AF55]/25">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#7043A6] bg-[#FAF8FD] px-3 py-1 rounded-full border border-[#7043A6]/20 mb-2">
-              <Bell className="w-3.5 h-3.5 text-[#D6AF55]" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#4B267D] bg-[#F4E4B5]/45 px-3 py-1 rounded-full border border-[#D6AF55]/50 mb-2">
+              <Bell className="w-3.5 h-3.5 text-[#8E661D]" />
               <span>ข่าวสารและประกาศ</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-['Prompt'] font-bold text-[#4B267D]">
@@ -42,16 +45,16 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
           {activeItems.map((item) => (
             <div
               key={item.id}
-              className={`rounded-2xl p-6 border transition-all ${
+              className={`rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                 item.isPinned
-                  ? 'bg-gradient-to-br from-[#FAF8FD] to-white border-[#D6AF55]/60 shadow-sm'
-                  : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
+                  ? 'bg-gradient-to-br from-[#FAF8FD] to-white border-[#D6AF55]/70 shadow-sm'
+                  : 'bg-white border-slate-200 hover:border-[#D6AF55]/60 shadow-xs'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 text-xs font-['Prompt'] text-slate-500">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-['Prompt'] text-slate-500">
                   <span className="flex items-center gap-1 text-[#7043A6]">
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar className="w-3.5 h-3.5 text-[#D6AF55]" />
                     <span>{item.date}</span>
                   </span>
                   <span>·</span>
@@ -61,7 +64,7 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
                   </span>
                 </div>
                 {item.isPinned && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-['Prompt'] font-semibold text-[#997324] bg-[#D6AF55]/15 px-2 py-0.5 rounded-md border border-[#D6AF55]/40">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-['Prompt'] font-semibold text-[#7A530F] bg-[#F4E4B5]/60 px-2.5 py-0.5 rounded-md border border-[#D6AF55]/60">
                     <Pin className="w-3 h-3" />
                     <span>ปักหมุด</span>
                   </span>
@@ -89,6 +92,13 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
             </div>
           ))}
         </div>
+
+        {/* Extra Admin-placed images in 'announcement' section */}
+        <DynamicSectionImages
+          items={managedImages}
+          section="announcement"
+          className="mt-8"
+        />
       </div>
     </section>
   );

@@ -1,50 +1,53 @@
 import React from 'react';
 import { Calendar, Clock, MapPin } from 'lucide-react';
-import { ScheduleItem } from '../config/defaultContent';
+import { ScheduleItem, ManagedSiteImage } from '../config/defaultContent';
+import { ThaiOrnament } from './ThaiOrnament';
+import { DynamicSectionImages } from './DynamicSectionImages';
 
 interface ScheduleSectionProps {
   schedule: ScheduleItem[];
+  managedImages?: ManagedSiteImage[];
 }
 
-export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule }) => {
+export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, managedImages }) => {
   const sorted = [...(schedule || [])].sort((a, b) => a.sortOrder - b.sortOrder);
 
   if (sorted.length === 0) return null;
 
   return (
-    <section className="py-14 px-4 bg-[#FAF8FD] border-t border-slate-200/60">
+    <section className="py-14 px-4 bg-[#FAF8FD]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#7043A6] bg-white px-3 py-1 rounded-full border border-[#7043A6]/20 mb-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#4B267D] bg-white px-3 py-1 rounded-full border border-[#D6AF55]/50 mb-2 shadow-2xs">
             <Calendar className="w-3.5 h-3.5 text-[#D6AF55]" />
             <span>เส้นทางกิจกรรม</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-['Prompt'] font-bold text-[#4B267D]">
             กำหนดการสำคัญ
           </h2>
-          <p className="text-sm font-['Sarabun'] text-slate-600 mt-2">
+          <ThaiOrnament className="my-2.5" />
+          <p className="text-sm font-['Sarabun'] text-slate-600 mt-1">
             ลำดับขั้นตอนการดำเนินกิจกรรมโครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-4">
           {sorted.map((item, index) => {
-            const isCompleted = item.status === 'completed';
             const isOngoing = item.status === 'ongoing';
 
             return (
               <div
                 key={item.id || index}
-                className={`bg-white rounded-2xl p-5 sm:p-6 border transition-all ${
+                className={`bg-white rounded-2xl p-5 sm:p-6 border transition-all duration-200 hover:shadow-md ${
                   isOngoing
-                    ? 'border-[#D6AF55] shadow-md ring-1 ring-[#D6AF55]/40'
-                    : 'border-slate-200 hover:border-[#7043A6]/40 shadow-xs'
+                    ? 'border-[#D6AF55] shadow-md ring-1 ring-[#D6AF55]/45'
+                    : 'border-slate-200 hover:border-[#D6AF55]/70 shadow-xs'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#4B267D]/10 text-[#4B267D] font-['Prompt'] font-bold text-xs flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-[#4B267D] text-[#F4E4B5] border border-[#D6AF55]/50 font-['Prompt'] font-bold text-xs flex items-center justify-center shrink-0">
                         {index + 1}
                       </span>
                       <h3 className="text-base sm:text-lg font-['Prompt'] font-bold text-[#30283A]">
@@ -52,24 +55,24 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule }) =>
                       </h3>
                     </div>
 
-                    <p className="text-xs sm:text-sm font-['Sarabun'] text-slate-600 pl-8">
+                    <p className="text-xs sm:text-sm font-['Sarabun'] text-slate-600 pl-9">
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="sm:text-right shrink-0 pl-8 sm:pl-0 space-y-1">
-                    <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#4B267D] bg-[#FAF8FD] px-2.5 py-1 rounded-md border border-purple-100">
-                      <Calendar className="w-3.5 h-3.5 text-[#D6AF55]" />
+                  <div className="sm:text-right shrink-0 pl-9 sm:pl-0 space-y-1">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#4B267D] bg-[#F4E4B5]/40 px-2.5 py-1 rounded-md border border-[#D6AF55]/50">
+                      <Calendar className="w-3.5 h-3.5 text-[#8E661D]" />
                       <span>{item.date}</span>
                     </div>
 
                     <div className="flex items-center sm:justify-end gap-3 text-xs text-slate-500 font-['Sarabun'] mt-1">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
+                        <Clock className="w-3 h-3 text-[#7043A6]" />
                         <span>{item.time}</span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <MapPin className="w-3 h-3 text-[#D6AF55]" />
                         <span>{item.location}</span>
                       </span>
                     </div>
@@ -79,6 +82,13 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule }) =>
             );
           })}
         </div>
+
+        {/* Extra Admin-placed images in 'activity' section */}
+        <DynamicSectionImages
+          items={managedImages}
+          section="activity"
+          className="max-w-4xl mx-auto mt-8"
+        />
       </div>
     </section>
   );

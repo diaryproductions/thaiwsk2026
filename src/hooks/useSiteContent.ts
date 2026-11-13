@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { SiteContent, DEFAULT_SITE_CONTENT } from '../config/defaultContent';
+import { SiteContent, DEFAULT_SITE_CONTENT, DEFAULT_SITE_IMAGE_ITEMS } from '../config/defaultContent';
 import { fetchSiteContent, getApiBaseUrl, initSharedConfig } from '../services/api';
 import { APP_CONFIG } from '../config/constants';
 
@@ -54,6 +54,10 @@ export function useSiteContent() {
             ...DEFAULT_SITE_CONTENT.siteImages,
             ...(fetched.siteImages || {}),
           },
+          siteImageItems:
+            Array.isArray(fetched.siteImageItems) && fetched.siteImageItems.length > 0
+              ? fetched.siteImageItems
+              : DEFAULT_SITE_IMAGE_ITEMS,
           about: {
             ...DEFAULT_SITE_CONTENT.about,
             ...(fetched.about || {}),

@@ -68,6 +68,29 @@ export interface StudyMaterial {
   isActive: boolean;
 }
 
+export type ImageSectionPlacement =
+  | 'heroLogo'
+  | 'headerLogo'
+  | 'about'
+  | 'activity'
+  | 'announcement'
+  | 'other';
+
+export interface ManagedSiteImage {
+  id: string;
+  title: string;
+  url: string;
+  section: ImageSectionPlacement;
+  alignment: 'left' | 'center' | 'right';
+  width: string;
+  height: string;
+  objectFit: 'contain' | 'cover';
+  spacing: number;
+  sortOrder: number;
+  isVisible: boolean;
+  caption?: string;
+}
+
 export interface SiteImages {
   headerLogoUrl: string; // โลโก้หัวเว็บ / แถบเมนู
   faviconUrl: string;   // ไอคอนเว็บ
@@ -82,6 +105,65 @@ export interface SiteImages {
   footerLogoUrl: string;     // ตราโรงเรียนท้ายเว็บ
 }
 
+export const DEFAULT_SITE_IMAGE_ITEMS: ManagedSiteImage[] = [
+  {
+    id: 'img-hero-logo',
+    title: 'โลโก้โครงการหลักส่วนหัวเว็บไซต์ (Hero Logo)',
+    url: 'images/ครูไทยวิเศษฯ-2026 (1).png',
+    section: 'heroLogo',
+    alignment: 'center',
+    width: '360px',
+    height: '180px',
+    objectFit: 'contain',
+    spacing: 16,
+    sortOrder: 1,
+    isVisible: true,
+    caption: 'โลโก้หลักประจำโครงการ THAI WSK 2026',
+  },
+  {
+    id: 'img-header-logo',
+    title: 'ตราสัญลักษณ์แถบเมนูด้านบน (Header Logo)',
+    url: 'images/school_wsk_emblem_1794141246706.jpg',
+    section: 'headerLogo',
+    alignment: 'left',
+    width: '44px',
+    height: '44px',
+    objectFit: 'cover',
+    spacing: 8,
+    sortOrder: 2,
+    isVisible: true,
+    caption: 'ตรากลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"',
+  },
+  {
+    id: 'img-about-main',
+    title: 'ภาพบรรยากาศกิจกรรมวิชาการ (เกี่ยวกับโครงการ)',
+    url: 'images/about_academic_thai_1794141247386.jpg',
+    section: 'about',
+    alignment: 'center',
+    width: '100%',
+    height: '320px',
+    objectFit: 'cover',
+    spacing: 16,
+    sortOrder: 3,
+    isVisible: true,
+    caption: 'บรรยากาศการวัดและประเมินผลความรู้ภาษาไทย',
+  },
+  {
+    id: 'img-about-teacher',
+    title: 'ภาพคณะครูกลุ่มสาระการเรียนรู้ภาษาไทย',
+    url: 'images/thai_teacher_team_2026.png',
+    section: 'about',
+    alignment: 'center',
+    width: '100%',
+    height: '160px',
+    objectFit: 'cover',
+    spacing: 12,
+    sortOrder: 4,
+    isVisible: true,
+    caption: 'คณะครูผู้สอนภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"',
+  },
+];
+
 export interface SiteContent {
   version: number;
   updatedAt: string;
@@ -93,6 +175,7 @@ export interface SiteContent {
     countdownLabel: string;
   };
   siteImages: SiteImages;
+  siteImageItems?: ManagedSiteImage[];
   heroSlides: HeroSlide[];
   studyMaterials: StudyMaterial[];
   about: {
@@ -150,6 +233,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     certificateBannerUrl: 'images/thai_literature_contest_1794141246113.jpg',
     footerLogoUrl: 'images/school_wsk_emblem_1794141246706.jpg',
   },
+  siteImageItems: DEFAULT_SITE_IMAGE_ITEMS,
   studyMaterials: [],
   heroSlides: [
     {

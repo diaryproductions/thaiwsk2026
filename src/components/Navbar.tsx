@@ -9,6 +9,7 @@ interface NavbarProps {
   onSelectTab: (tab: NavTab) => void;
   isBackendConnected: boolean;
   logoUrl?: string;
+  showLogo?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTab,
   isBackendConnected,
   logoUrl,
+  showLogo = true,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -33,14 +35,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#D6AF55]/30 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#D6AF55]/40 shadow-xs transition-shadow">
       {/* Top Banner Ribbon */}
-      <div className="bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#4B267D] text-[#FAF8FD] text-xs py-1.5 px-4 text-center">
+      <div className="bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#4B267D] text-[#FAF8FD] text-xs py-1.5 px-4 text-center border-b border-[#D6AF55]/30">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 font-['Sarabun']">
-          <span className="truncate hidden sm:inline">
+          <span className="truncate hidden sm:inline text-[#F4E4B5]">
             กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน &quot;วิเศษสมุทคุณ&quot;
           </span>
-          <span className="truncate sm:hidden font-medium">
+          <span className="truncate sm:hidden font-medium text-[#F4E4B5]">
             THAI WSK ๒๕๖๙ สืบศิลป์ถิ่นอักษร
           </span>
           <div className="flex items-center gap-3 shrink-0 text-[11px]">
@@ -57,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               href="https://www.wsk.ac.th/wp/"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-[#D6AF55] transition-colors inline-flex items-center gap-1"
+              className="hover:text-[#F4E4B5] transition-colors inline-flex items-center gap-1"
             >
               <span>WSK Official</span>
               <ExternalLink className="w-3 h-3" />
@@ -72,21 +74,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Zone 1: Brand Wordmark */}
           <button
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7043A6] rounded-lg p-1"
+            className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7043A6] rounded-lg p-1 cursor-pointer"
           >
-            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#4B267D] to-[#7043A6] p-0.5 border border-[#D6AF55] shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
-              <SmartImage
-                src={logoUrl || 'images/school_wsk_emblem_1794141246706.jpg'}
-                alt="ตรากลุ่มสาระฯ ภาษาไทย WSK"
-                fallbackType="logo"
-                className="w-full h-full object-cover rounded-full"
-                containerClassName="w-full h-full rounded-full"
-              />
-            </div>
+            {showLogo && (
+              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#4B267D] to-[#7043A6] p-0.5 border border-[#D6AF55] shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                <SmartImage
+                  src={logoUrl || 'images/school_wsk_emblem_1794141246706.jpg'}
+                  alt="ตรากลุ่มสาระฯ ภาษาไทย WSK"
+                  fallbackType="logo"
+                  className="w-full h-full object-cover rounded-full"
+                  containerClassName="w-full h-full rounded-full"
+                />
+              </div>
+            )}
             <div>
               <div className="font-['Prompt'] font-bold text-lg text-[#4B267D] tracking-tight leading-tight flex items-center gap-1.5">
                 <span>THAI WSK 2026</span>
-                <span className="text-[#D6AF55] text-xs font-normal border border-[#D6AF55]/50 rounded px-1 py-0.2">
+                <span className="text-[#8E661D] bg-[#F4E4B5]/45 text-xs font-semibold border border-[#D6AF55]/60 rounded px-1.5 py-0.2">
                   ๒๕๖๙
                 </span>
               </div>
@@ -104,9 +108,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={link.id}
                   onClick={() => handleNavClick(link.id)}
-                  className={`px-3.5 py-2 rounded-lg text-sm font-['Prompt'] font-medium whitespace-nowrap transition-all ${
+                  className={`relative px-3.5 py-2 rounded-lg text-sm font-['Prompt'] font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? 'bg-[#4B267D] text-[#FAF8FD] shadow-xs'
+                      ? 'bg-[#4B267D] text-[#FAF8FD] shadow-xs ring-1 ring-[#D6AF55]/50'
                       : 'text-[#30283A] hover:text-[#4B267D] hover:bg-[#FAF8FD]'
                   }`}
                 >

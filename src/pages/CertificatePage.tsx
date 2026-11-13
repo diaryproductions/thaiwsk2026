@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
-import { Search, Award, Eye, Download, AlertTriangle, XCircle, HelpCircle, User, School, Sparkles } from 'lucide-react';
+import {
+  Search,
+  Award,
+  Eye,
+  Download,
+  XCircle,
+  HelpCircle,
+  School,
+  Sparkles,
+  Trophy,
+  Medal,
+  FileBadge,
+} from 'lucide-react';
 import { searchCertificate, CertificateSearchResult } from '../services/api';
 import { CertificateModal } from '../components/CertificateModal';
 import { SiteContent } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
 import { SmartImage } from '../components/SmartImage';
+import { getMedalTheme } from '../utils/medalTheme';
 
 interface CertificatePageProps {
   content: SiteContent;
@@ -13,7 +26,6 @@ interface CertificatePageProps {
 
 export const CertificatePage: React.FC<CertificatePageProps> = ({
   content,
-  isBackendConnected,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
@@ -83,37 +95,17 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
     setRequiresRefinement(false);
   };
 
-  const getMedalBadge = (medal: string) => {
-    const text = medal.trim();
-    if (text.includes('ทองแดง')) {
-      return {
-        bg: 'bg-amber-100 text-amber-900 border-amber-300',
-        iconColor: 'text-amber-700',
-      };
-    }
-    if (text.includes('ทอง')) {
-      return {
-        bg: 'bg-[#D6AF55]/20 text-[#855e16] border-[#D6AF55]/50 font-bold',
-        iconColor: 'text-[#D6AF55]',
-      };
-    }
-    if (text.includes('เงิน')) {
-      return {
-        bg: 'bg-slate-100 text-slate-800 border-slate-300',
-        iconColor: 'text-slate-500',
-      };
-    }
-    return {
-      bg: 'bg-[#7043A6]/15 text-[#4B267D] border-[#7043A6]/30',
-      iconColor: 'text-[#7043A6]',
-    };
+  const renderMedalIcon = (category: string, className: string) => {
+    if (category === 'gold') return <Trophy className={className} />;
+    if (category === 'silver' || category === 'bronze') return <Medal className={className} />;
+    return <FileBadge className={className} />;
   };
 
   return (
     <div className="py-12 px-4 max-w-7xl mx-auto">
       {/* Page Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#7043A6] bg-white px-3 py-1 rounded-full border border-[#7043A6]/20 mb-3 shadow-xs">
+        <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#7043A6] bg-white px-3 py-1 rounded-full border border-[#D6AF55]/50 mb-3 shadow-xs">
           <Award className="w-3.5 h-3.5 text-[#D6AF55]" />
           <span>ระบบดาวน์โหลดเกียรติบัตรอิเล็กทรอนิกส์</span>
         </div>
@@ -127,16 +119,16 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
 
       {/* Decorative Banner if configured */}
       {content.siteImages?.certificateBannerUrl && (
-        <div className="max-w-3xl mx-auto mb-6 rounded-2xl overflow-hidden shadow-xs border border-[#D6AF55]/30 h-32 sm:h-44 relative bg-slate-900">
+        <div className="max-w-3xl mx-auto mb-6 rounded-2xl overflow-hidden shadow-xs border border-[#D6AF55]/40 h-32 sm:h-44 relative bg-slate-900">
           <SmartImage
             src={content.siteImages.certificateBannerUrl}
             alt="เกียรติบัตรอิเล็กทรอนิกส์"
             fallbackType="contest"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#2B154A]/75 via-transparent to-transparent flex items-end p-4">
             <span className="text-white font-['Prompt'] text-xs font-semibold drop-shadow-sm flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-[#D6AF55]" />
+              <Award className="w-4 h-4 text-[#F4E4B5]" />
               โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ๒๕๖๙
             </span>
           </div>
@@ -144,7 +136,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
       )}
 
       {/* Search Input Box */}
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-10">
+      <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-[#D6AF55]/35 shadow-sm p-6 sm:p-8 mb-10">
         <form onSubmit={handleSearch} className="space-y-4">
           <div>
             <label className="block text-xs font-['Prompt'] font-semibold text-[#30283A] mb-1.5">
@@ -208,7 +200,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 ล้างข้อมูล
               </button>
@@ -216,7 +208,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
             <button
               type="submit"
               disabled={isSearching || !searchQuery.trim()}
-              className="px-6 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#4B267D] to-[#7043A6] hover:from-[#30283A] hover:to-[#4B267D] shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#4B267D] to-[#7043A6] hover:from-[#30283A] hover:to-[#4B267D] shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
             >
               {isSearching ? (
                 <>
@@ -251,22 +243,23 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
         )}
 
         {results.map((item, index) => {
-          const medalStyle = getMedalBadge(item.medal);
+          const medalTheme = getMedalTheme(item.medal);
           const hasValidLink = Boolean(item.certificateUrl && item.certificateUrl.trim());
+          const medalDisplay = (item.medal || '').trim() || '-';
 
           return (
             <div
               key={index}
-              className="bg-white rounded-3xl border border-[#D6AF55]/40 shadow-md overflow-hidden hover:shadow-lg transition-all"
+              className="bg-white rounded-3xl border border-[#D6AF55]/50 shadow-md overflow-hidden hover:shadow-lg transition-all animate-wsk-fade-up"
             >
-              {/* Card Top */}
-              <div className="bg-gradient-to-r from-[#4B267D] to-[#7043A6] p-6 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Card Top Identity */}
+              <div className="bg-gradient-to-r from-[#4B267D] via-[#5F3498] to-[#7043A6] p-6 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[#D6AF55] shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-white/12 border border-[#F4E4B5]/40 flex items-center justify-center text-[#F4E4B5] shrink-0">
                     <Award className="w-6 h-6" />
                   </div>
                   <div>
-                    <div className="text-xs font-['Prompt'] text-[#D6AF55] flex items-center gap-1.5">
+                    <div className="text-xs font-['Prompt'] text-[#F4E4B5] flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>เกียรติบัตรฉบับอิเล็กทรอนิกส์</span>
                     </div>
@@ -276,35 +269,72 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                   </div>
                 </div>
 
-                {/* Direct Medal Level from Column E */}
-                <div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-['Prompt'] font-bold text-sm border shadow-xs ${medalStyle.bg}`}
-                  >
-                    <Award className={`w-4 h-4 ${medalStyle.iconColor}`} />
-                    <span>{item.medal}</span>
-                  </span>
+                <div className="text-left sm:text-right text-xs font-['Prompt'] text-white/85">
+                  <div>
+                    ชั้น <strong className="text-[#F4E4B5]">{item.grade || '-'}</strong>
+                    {item.room ? ` · ห้อง ${item.room}` : ''}
+                  </div>
                 </div>
               </div>
 
-              {/* Student Metadata */}
+              {/* Prominent Award Highlight Banner (Strictly read from Column E) */}
+              <div className="px-6 sm:px-8 pt-6">
+                <div
+                  className={`relative overflow-hidden rounded-2xl border-2 ${medalTheme.bannerBorder} ${medalTheme.bannerBg} p-4 sm:p-5 shadow-xs`}
+                >
+                  <div
+                    className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${medalTheme.accentLine}`}
+                  />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border ${medalTheme.iconBg} flex items-center justify-center shrink-0 shadow-2xs`}
+                      >
+                        {renderMedalIcon(
+                          medalTheme.category,
+                          `w-6 h-6 sm:w-7 sm:h-7 ${medalTheme.iconColor}`
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[11px] sm:text-xs font-['Prompt'] font-semibold text-slate-600 uppercase tracking-wide">
+                          ระดับรางวัล / เหรียญที่ได้รับ
+                        </p>
+                        <p
+                          className={`text-lg sm:text-2xl font-['Prompt'] font-bold ${medalTheme.titleColor} mt-0.5`}
+                        >
+                          {medalDisplay}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl font-['Prompt'] font-bold text-xs sm:text-sm border shadow-xs ${medalTheme.badgeBg} self-start sm:self-center`}
+                    >
+                      {renderMedalIcon(medalTheme.category, 'w-4 h-4')}
+                      <span>{medalDisplay}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Metadata & Actions */}
               <div className="p-6 sm:p-8 space-y-6">
                 <div className="grid grid-cols-3 gap-4 pb-6 border-b border-slate-100 text-center font-['Prompt']">
-                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
+                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">เลขที่ (ลำดับ)</div>
                     <div className="text-base sm:text-lg font-bold text-[#30283A] mt-1 tabular-nums">
                       {item.number || '-'}
                     </div>
                   </div>
 
-                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
+                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">ระดับชั้น</div>
                     <div className="text-base sm:text-lg font-bold text-[#4B267D] mt-1">
                       {item.grade || '-'}
                     </div>
                   </div>
 
-                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
+                  <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">ห้องเรียน</div>
                     <div className="text-base sm:text-lg font-bold text-[#4B267D] mt-1 tabular-nums">
                       {item.room ? `ห้อง ${item.room}` : '-'}
@@ -325,7 +355,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                         <button
                           type="button"
                           onClick={() => setActivePreviewCert(item)}
-                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#7043A6]/30 text-[#4B267D] hover:bg-[#FAF8FD] transition-colors flex items-center justify-center gap-1.5"
+                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#7043A6]/35 text-[#4B267D] hover:bg-[#FAF8FD] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Eye className="w-4 h-4 text-[#7043A6]" />
                           <span>เปิดดูเกียรติบัตร</span>
@@ -337,7 +367,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                           rel="noopener noreferrer"
                           className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-[#4B267D] to-[#7043A6] hover:from-[#30283A] hover:to-[#4B267D] shadow-sm flex items-center justify-center gap-2"
                         >
-                          <Download className="w-4 h-4 text-[#D6AF55]" />
+                          <Download className="w-4 h-4 text-[#F4E4B5]" />
                           <span>ดาวน์โหลดเกียรติบัตร</span>
                         </a>
                       </>

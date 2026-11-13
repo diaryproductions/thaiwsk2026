@@ -136,6 +136,16 @@ function doPost(e) {
       return jsonResponse(saveSiteContentToSheet(data.content, data.token));
     }
 
+    // 5. ดึงรายการเกียรติบัตรทั้งหมดสำหรับผู้ดูแลระบบ (Admin Only - POST)
+    if (action === 'listCertificates') {
+      return jsonResponse(listAllCertificatesAdmin(data.token));
+    }
+
+    // 6. ดึงไฟล์ PDF เกียรติบัตรในรูปแบบ Base64 สำหรับรวม PDF (Admin Only - POST)
+    if (action === 'fetchCertificatePdf') {
+      return jsonResponse(fetchCertificatePdfAdmin(data.url, data.token));
+    }
+
     return jsonResponse({
       success: false,
       message: 'ไม่พบ Action ที่ร้องขอ (' + action + ')',
@@ -447,6 +457,7 @@ function resolveDriveInfo(rawUrl) {
 
   if (driveId) {
     return {
+      driveId: driveId,
       previewUrl: 'https://drive.google.com/file/d/' + driveId + '/preview',
       downloadUrl: 'https://drive.google.com/uc?id=' + driveId + '&export=download',
       isDrive: true,
@@ -454,6 +465,7 @@ function resolveDriveInfo(rawUrl) {
   }
 
   return {
+    driveId: '',
     previewUrl: rawUrl,
     downloadUrl: rawUrl,
     isDrive: false,
@@ -516,11 +528,32 @@ function getSiteVersionFromSheet() {
 }
 
 /**
+ * ตรวจสอบความถูกต้องของ Admin Token
+ */
+function isValidAdminToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  var clean = String(token).trim();
+  if (!clean) return false;
+  try {
+    var cache = CacheService.getScriptCache();
+    if (cache && cache.get('admin_tok_' + clean) === '1') {
+      return true;
+    }
+  } catch (e) {
+    // Fallback if CacheService unavailable
+  }
+  return clean.indexOf('gas-token-') === 0;
+}
+
+/**
  * ตรวจสอบรหัสผ่านแอดมิน
  */
 function handleAdminLogin(username, password) {
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     var token = 'gas-token-' + new Date().getTime() + '-' + Math.floor(Math.random() * 100000);
+    try {
+      CacheService.getScriptCache().put('admin_tok_' + token, '1', 21600);
+    } catch (e) {}
     return {
       success: true,
       token: token,
@@ -534,11 +567,215 @@ function handleAdminLogin(username, password) {
 }
 
 /**
+ * ดึงข้อมูลเกียรติบัตรทั้งหมดจากแผ่นงาน 'ดาวน์โหลดเกียรติบัตร'!A:F (เฉพาะ Admin)
+ */
+function listAllCertificatesAdmin(token) {
+  if (!isValidAdminToken(token)) {
+    return {
+      success: false,
+      authExpired: true,
+      message: 'ไม่มีสิทธิ์เข้าถึงหรือเซสชันแอดมินหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+    };
+  }
+
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(CERTIFICATE_SHEET);
+    if (!sheet) {
+      return {
+        success: false,
+        message: 'ไม่พบแผ่นงาน "' + CERTIFICATE_SHEET + '" ในสเปรดชีต',
+      };
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      return {
+        success: true,
+        data: [],
+        total: 0,
+      };
+    }
+
+    var range = sheet.getRange(2, 1, lastRow - 1, 6);
+    var values = range.getValues();
+    var formulas = range.getFormulas();
+    var richText = range.getRichTextValues();
+    var items = [];
+
+    for (var i = 0; i < values.length; i++) {
+      var row = values[i];
+      var number = String(row[0] || '').trim();
+      var fullName = String(row[1] || '').trim();
+      var grade = String(row[2] || '').trim();
+      var room = String(row[3] || '').trim();
+      var medal = String(row[4] || '').trim();
+
+      var rawUrl = '';
+      var formulaF = formulas[i] ? formulas[i][5] : '';
+      if (formulaF) {
+        var matchFormula = formulaF.match(/HYPERLINK\(\s*["']([^"']+)["']/i);
+        if (matchFormula && matchFormula[1]) {
+          rawUrl = matchFormula[1];
+        }
+      }
+      if (!rawUrl && richText && richText[i] && richText[i][5]) {
+        var rtLink = richText[i][5].getLinkUrl();
+        if (rtLink) {
+          rawUrl = rtLink;
+        }
+      }
+      if (!rawUrl && row[5]) {
+        var cellText = String(row[5]).trim();
+        var urlMatch = cellText.match(/https?:\/\/[^\s"'<>]+/);
+        if (urlMatch) {
+          rawUrl = urlMatch[0];
+        }
+      }
+
+      if (!fullName && !rawUrl) {
+        continue;
+      }
+
+      var driveInfo = resolveDriveInfo(rawUrl);
+      items.push({
+        rowIndex: i + 2,
+        number: number,
+        fullName: fullName,
+        grade: grade,
+        room: room,
+        medal: medal,
+        certificateUrl: rawUrl,
+        previewUrl: driveInfo.previewUrl,
+        downloadUrl: driveInfo.downloadUrl,
+        isDrive: driveInfo.isDrive,
+        driveId: driveInfo.driveId || '',
+      });
+    }
+
+    return {
+      success: true,
+      data: items,
+      total: items.length,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'ไม่สามารถอ่านข้อมูลเกียรติบัตรได้: ' + err.message,
+    };
+  }
+}
+
+/**
+ * ดึงไฟล์ PDF เกียรติบัตรในรูปแบบ Base64 (ตรวจสอบสิทธิ์และ Magic Bytes %PDF ก่อนส่งกลับ)
+ */
+function fetchCertificatePdfAdmin(rawUrl, token) {
+  if (!isValidAdminToken(token)) {
+    return {
+      success: false,
+      authExpired: true,
+      errorType: 'AUTH_REQUIRED',
+      message: 'เซสชันแอดมินหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+    };
+  }
+
+  if (!rawUrl || typeof rawUrl !== 'string' || !String(rawUrl).trim()) {
+    return {
+      success: false,
+      errorType: 'MISSING_URL',
+      message: 'ไม่พบลิงก์ไฟล์เกียรติบัตรในคอลัมน์ F',
+    };
+  }
+
+  var driveInfo = resolveDriveInfo(String(rawUrl).trim());
+  var blob = null;
+  var fileName = 'certificate.pdf';
+
+  // 1. กรณีเป็น Google Drive File ID ให้ดึงผ่าน DriveApp ก่อนเพื่อรองรับทั้งไฟล์ส่วนตัวของผู้สร้างสคริปต์และไฟล์สาธารณะ
+  if (driveInfo.isDrive && driveInfo.driveId) {
+    try {
+      var file = DriveApp.getFileById(driveInfo.driveId);
+      fileName = file.getName() || fileName;
+      var mimeType = file.getMimeType();
+      if (mimeType === 'application/pdf') {
+        blob = file.getBlob();
+      } else if (
+        mimeType === 'application/vnd.google-apps.document' ||
+        mimeType === 'application/vnd.google-apps.presentation' ||
+        mimeType === 'application/vnd.google-apps.spreadsheet'
+      ) {
+        blob = file.getAs('application/pdf');
+      } else {
+        blob = file.getBlob();
+      }
+    } catch (driveErr) {
+      // Fallback ไปดึงผ่าน UrlFetchApp กรณีไฟล์แชร์แบบสาธารณะแต่บัญชีเจ้าของสคริปต์ไม่มีสิทธิ์ DriveApp หรือขอบเขตสิทธิ์จำกัด
+      blob = null;
+    }
+  }
+
+  // 2. Fallback หรือลิงก์ PDF ภายนอกผ่าน UrlFetchApp
+  if (!blob) {
+    try {
+      var fetchTarget = driveInfo.isDrive ? driveInfo.downloadUrl : String(rawUrl).trim();
+      var response = UrlFetchApp.fetch(fetchTarget, {
+        followRedirects: true,
+        muteHttpExceptions: true,
+      });
+      var statusCode = response.getResponseCode();
+      if (statusCode < 200 || statusCode >= 300) {
+        return {
+          success: false,
+          errorType: 'HTTP_ERROR',
+          message: 'ไม่สามารถดาวน์โหลดไฟล์ได้ (HTTP ' + statusCode + ')',
+        };
+      }
+      blob = response.getBlob();
+    } catch (fetchErr) {
+      return {
+        success: false,
+        errorType: 'FETCH_FAILED',
+        message: 'ไม่สามารถเข้าถึงไฟล์เกียรติบัตรได้: ' + fetchErr.message,
+      };
+    }
+  }
+
+  var bytes = blob.getBytes();
+  // ตรวจสอบ %PDF header (0x25, 0x50, 0x44, 0x46)
+  var isPdfHeader =
+    bytes &&
+    bytes.length >= 5 &&
+    bytes[0] === 37 &&
+    bytes[1] === 80 &&
+    bytes[2] === 68 &&
+    bytes[3] === 70;
+
+  if (!isPdfHeader) {
+    return {
+      success: false,
+      errorType: 'NOT_A_PDF',
+      message: 'ไฟล์ปลายทางไม่ใช่เอกสาร PDF ที่สมบูรณ์ (อาจติดสิทธิ์เข้าสู่ระบบ Google Drive หรือเป็นลิงก์หน้าเว็บ)',
+    };
+  }
+
+  return {
+    success: true,
+    base64: Utilities.base64Encode(bytes),
+    fileName: fileName,
+    byteSize: bytes.length,
+    mimeType: 'application/pdf',
+  };
+}
+
+/**
  * บันทึกข้อมูล CMS ลงคอลัมน์ H:O ของแผ่นงาน 'ตรวจสอบคะแนน' (ห้ามแตะต้อง A:F)
  */
 function saveSiteContentToSheet(content, token) {
   if (!content) {
     return { success: false, message: 'ไม่มีข้อมูล Content สำหรับบันทึก' };
+  }
+  if (!isValidAdminToken(token)) {
+    return { success: false, message: 'ไม่มีสิทธิ์บันทึกข้อมูล กรุณาเข้าสู่ระบบแอดมินใหม่' };
   }
 
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
