@@ -86,7 +86,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin_wsk"
+                  placeholder="   "
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-[#7043A6] focus:ring-2 focus:ring-[#7043A6]/20 font-['Prompt'] text-sm text-[#30283A] outline-none"
                 />
