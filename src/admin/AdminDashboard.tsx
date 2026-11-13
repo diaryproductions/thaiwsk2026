@@ -30,6 +30,12 @@ import {
   Camera,
   FolderOpen,
   Layers,
+  GraduationCap,
+  Youtube,
+  ArrowUp,
+  ArrowDown,
+  EyeOff,
+  PlayCircle,
 } from 'lucide-react';
 import {
   SiteContent,
@@ -37,11 +43,13 @@ import {
   AwardCriterion,
   ScheduleItem,
   AnnouncementItem,
+  StudyMaterial,
   DEFAULT_SITE_CONTENT,
   SiteImages,
 } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
 import { SmartImage } from '../components/SmartImage';
+import { isViewerPageUrl, extractYouTubeId } from '../utils/imageUrl';
 import {
   saveSiteContent,
   getApiBaseUrl,
@@ -66,6 +74,7 @@ interface AdminDashboardProps {
 
 type AdminSection =
   | 'meta'
+  | 'study'
   | 'media'
   | 'slides'
   | 'about'
@@ -85,11 +94,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   refreshContent,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminSection>('meta');
+  const [studyLevelFilter, setStudyLevelFilter] = useState<'all' | 'junior' | 'senior'>('all');
+  const [previewStudyId, setPreviewStudyId] = useState<string | null>(null);
   const [formData, setFormData] = useState<SiteContent>(() => {
     const copy: SiteContent = JSON.parse(JSON.stringify(content));
-    if (!copy.siteImages) {
-      copy.siteImages = { ...DEFAULT_SITE_CONTENT.siteImages };
-    }
+    copy.siteImages = {
+      ...DEFAULT_SITE_CONTENT.siteImages,
+      ...(copy.siteImages || {}),
+    };
+    copy.studyMaterials = Array.isArray(copy.studyMaterials) ? copy.studyMaterials : [];
     if (!copy.about.teacherImageUrl) {
       copy.about.teacherImageUrl = 'images/thai_teacher_team_2026.png';
     }
@@ -212,7 +225,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const res = await saveSiteContent(updatedData);
       if (res.success && res.verified) {
         // Only update display once confirmed and read back from Google Sheets
-        const verifiedData = res.verifiedContent || updatedData;
+        const verifiedData: SiteContent = {
+          ...DEFAULT_SITE_CONTENT,
+          ...(res.verifiedContent || updatedData),
+          siteImages: {
+            ...DEFAULT_SITE_CONTENT.siteImages,
+            ...((res.verifiedContent || updatedData).siteImages || {}),
+          },
+          studyMaterials: Array.isArray((res.verifiedContent || updatedData).studyMaterials)
+            ? (res.verifiedContent || updatedData).studyMaterials
+            : [],
+        };
         setFormData(verifiedData);
         onUpdateContentLocally(verifiedData);
         setSaveStatus({
@@ -334,6 +357,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
+  const handleAddStudyMaterial = (defaultLevel: 'junior' | 'senior' = 'junior') => {
+    const existing = formData.studyMaterials || [];
+    const newMaterial: StudyMaterial = {
+      id: `study-${Date.now()}`,
+      level: defaultLevel,
+      type: 'pdf',
+      title: 'ชื่อสื่อการเรียนรู้ภาษาไทยใหม่',
+      description: 'คำอธิบายเนื้อหาหรือแนวทางทบทวนความรู้...',
+      url: '',
+      sortOrder: existing.length + 1,
+      isActive: true,
+    };
+    setFormData({
+      ...formData,
+      studyMaterials: [...existing, newMaterial],
+    });
+  };
+
+  const handleDeleteStudyMaterial = (id: string) => {
+    const remaining = (formData.studyMaterials || [])
+      .filter((m) => m.id !== id)
+      .map((m, i) => ({ ...m, sortOrder: i + 1 }));
+    setFormData({
+      ...formData,
+      studyMaterials: remaining,
+    });
+    if (previewStudyId === id) setPreviewStudyId(null);
+  };
+
+  const handleMoveStudyMaterial = (id: string, direction: 'up' | 'down') => {
+    const sorted = [...(formData.studyMaterials || [])].sort(
+      (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+    );
+    const index = sorted.findIndex((m) => m.id === id);
+    if (index === -1) return;
+    const swapIdx = direction === 'up' ? index - 1 : index + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const temp = sorted[index];
+    sorted[index] = sorted[swapIdx];
+    sorted[swapIdx] = temp;
+    const reindexed = sorted.map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
+    setFormData({
+      ...formData,
+      studyMaterials: reindexed,
+    });
+  };
+
   return (
     <div className="py-8 px-4 max-w-7xl mx-auto space-y-6">
       {/* Top Action Bar */}
@@ -404,8 +474,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-2 space-y-1 font-['Prompt'] text-xs sm:text-sm shadow-xs">
           {[
             { id: 'meta' as AdminSection, label: 'ข้อมูลทั่วไป & Countdown', icon: Globe },
+            { id: 'study' as AdminSection, label: 'จัดการสื่อศึกษาและทบทวนความรู้', icon: GraduationCap },
             { id: 'media' as AdminSection, label: 'จัดการรูปภาพทุกจุด (Media)', icon: Camera },
-            { id: 'slides' as AdminSection, label: 'ภาพสไลด์หน้าแรก (Hero)', icon: Image },
+            { id: 'slides' as AdminSection, label: 'ส่วนหัวเว็บไซต์ (Hero Banner)', icon: Image },
             { id: 'about' as AdminSection, label: 'เกี่ยวกับโครงการวิชาการ', icon: FileText },
             { id: 'awards' as AdminSection, label: 'เกณฑ์รางวัลและเกียรติบัตร', icon: Award },
             { id: 'schedule' as AdminSection, label: 'กำหนดการสำคัญ', icon: Calendar },
@@ -533,6 +604,345 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
+          {/* TAB: STUDY RESOURCES MANAGEMENT */}
+          {activeTab === 'study' && (() => {
+            const allMaterials = [...(formData.studyMaterials || [])].sort(
+              (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+            );
+            const filteredMaterials = allMaterials.filter(
+              (m) => studyLevelFilter === 'all' || m.level === studyLevelFilter
+            );
+            const juniorCount = allMaterials.filter((m) => m.level === 'junior').length;
+            const seniorCount = allMaterials.filter((m) => m.level === 'senior').length;
+
+            return (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5 text-[#D6AF55]" />
+                      <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
+                        จัดการสื่อศึกษาและทบทวนความรู้ด้านภาษาไทย
+                      </h3>
+                    </div>
+                    <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
+                      เพิ่ม แก้ไข จัดลำดับ และเปิด/ปิดการแสดงผลสื่อการเรียนรู้ (PDF และ YouTube) สำหรับระดับ ม.ต้น และ ม.ปลาย
+                      แล้วกดปุ่ม &quot;บันทึกข้อมูล (Publish)&quot; ด้านบนเพื่อบันทึกถาวรลง Google Sheets
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleAddStudyMaterial(studyLevelFilter === 'senior' ? 'senior' : 'junior')
+                    }
+                    className="px-4 py-2 rounded-xl text-xs font-['Prompt'] font-semibold bg-[#4B267D] text-white hover:bg-[#30283A] transition-colors flex items-center gap-1.5 shrink-0 shadow-xs"
+                  >
+                    <Plus className="w-4 h-4 text-[#D6AF55]" />
+                    <span>เพิ่มสื่อการเรียนรู้</span>
+                  </button>
+                </div>
+
+                {/* Level Filter Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8FD] p-3 rounded-2xl border border-slate-200">
+                  <div className="flex flex-wrap items-center gap-1.5 font-['Prompt'] text-xs">
+                    {[
+                      { id: 'all' as const, label: `ทั้งหมด (${allMaterials.length})` },
+                      { id: 'junior' as const, label: `ม.ต้น ม.1–ม.3 (${juniorCount})` },
+                      { id: 'senior' as const, label: `ม.ปลาย ม.4–ม.6 (${seniorCount})` },
+                    ].map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setStudyLevelFilter(f.id)}
+                        className={`px-3 py-1.5 rounded-xl font-medium transition-colors ${
+                          studyLevelFilter === f.id
+                            ? 'bg-[#4B267D] text-white shadow-2xs'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:text-[#4B267D]'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-[11px] font-['Sarabun'] text-slate-500">
+                    * ข้อมูลสื่อจะถูกเก็บในคอลัมน์ CMS ของแผ่นงานตรวจสอบคะแนน (ไม่แตะต้องคอลัมน์ A–F)
+                  </span>
+                </div>
+
+                {/* Study Materials List */}
+                {filteredMaterials.length === 0 ? (
+                  <div className="py-12 px-4 text-center rounded-2xl border border-dashed border-slate-300 bg-[#FAF8FD]/50">
+                    <GraduationCap className="w-10 h-10 text-[#7043A6]/50 mx-auto mb-2" />
+                    <p className="font-['Prompt'] font-semibold text-sm text-[#30283A]">
+                      ยังไม่มีรายการสื่อการเรียนรู้ในหมวดนี้
+                    </p>
+                    <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
+                      กดปุ่ม &quot;เพิ่มสื่อการเรียนรู้&quot; ด้านบนเพื่อเพิ่มลิงก์เอกสาร PDF หรือวิดีโอ YouTube
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredMaterials.map((item) => {
+                      const realIndex = (formData.studyMaterials || []).findIndex(
+                        (m) => m.id === item.id
+                      );
+                      const isPreviewOpen = previewStudyId === item.id;
+                      const ytId = item.type === 'youtube' ? extractYouTubeId(item.url) : null;
+                      const updateItem = (patch: Partial<StudyMaterial>) => {
+                        const updated = [...(formData.studyMaterials || [])];
+                        if (realIndex !== -1) {
+                          updated[realIndex] = { ...updated[realIndex], ...patch };
+                          setFormData({ ...formData, studyMaterials: updated });
+                        }
+                      };
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`p-5 rounded-2xl border space-y-4 transition-colors ${
+                            item.isActive
+                              ? 'border-slate-200 bg-[#FAF8FD]'
+                              : 'border-slate-200 bg-slate-100/70 opacity-80'
+                          }`}
+                        >
+                          {/* Header Controls */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-xs font-['Prompt'] font-bold text-[#4B267D]">
+                                ลำดับที่ {item.sortOrder || realIndex + 1}
+                              </span>
+                              <span className="text-slate-300">·</span>
+                              <span className="inline-flex items-center gap-1 text-xs font-['Prompt'] font-semibold text-[#7043A6]">
+                                {item.type === 'pdf' ? (
+                                  <FileText className="w-3.5 h-3.5 text-amber-700" />
+                                ) : (
+                                  <Youtube className="w-3.5 h-3.5 text-red-600" />
+                                )}
+                                <span>{item.type === 'pdf' ? 'เอกสาร PDF' : 'วิดีโอ YouTube'}</span>
+                              </span>
+                              <label className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] text-slate-700 cursor-pointer ml-2">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isActive !== false}
+                                  onChange={(e) => updateItem({ isActive: e.target.checked })}
+                                  className="rounded text-[#4B267D]"
+                                />
+                                <span>
+                                  {item.isActive !== false ? (
+                                    <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                                      <Eye className="w-3.5 h-3.5" />
+                                      แสดงบนหน้าเว็บ
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-slate-500">
+                                      <EyeOff className="w-3.5 h-3.5" />
+                                      ซ่อนไว้ชั่วคราว
+                                    </span>
+                                  )}
+                                </span>
+                              </label>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveStudyMaterial(item.id, 'up')}
+                                title="เลื่อนขึ้น"
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#4B267D] hover:border-[#7043A6]"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveStudyMaterial(item.id, 'down')}
+                                title="เลื่อนลง"
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#4B267D] hover:border-[#7043A6]"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteStudyMaterial(item.id)}
+                                title="ลบรายการ"
+                                className="p-1.5 rounded-lg border border-red-200 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 ml-1"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Fields Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-['Prompt']">
+                            <div>
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                ระดับชั้น
+                              </label>
+                              <select
+                                value={item.level}
+                                onChange={(e) =>
+                                  updateItem({ level: e.target.value as 'junior' | 'senior' })
+                                }
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                              >
+                                <option value="junior">ระดับมัธยมศึกษาตอนต้น (ม.1–ม.3)</option>
+                                <option value="senior">ระดับมัธยมศึกษาตอนปลาย (ม.4–ม.6)</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                ประเภทสื่อการเรียนรู้
+                              </label>
+                              <select
+                                value={item.type}
+                                onChange={(e) =>
+                                  updateItem({ type: e.target.value as 'pdf' | 'youtube' })
+                                }
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                              >
+                                <option value="pdf">เอกสาร PDF (ใบความรู้ / เอกสารทบทวน)</option>
+                                <option value="youtube">วิดีโอ YouTube (วิดีโอการสอน / ทบทวน)</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                ลำดับการแสดงผล
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                value={item.sortOrder || 1}
+                                onChange={(e) =>
+                                  updateItem({ sortOrder: parseInt(e.target.value, 10) || 1 })
+                                }
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white tabular-nums"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                ชื่อสื่อการเรียนรู้
+                              </label>
+                              <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => updateItem({ title: e.target.value })}
+                                placeholder="เช่น สรุปหลักภาษาไทย ม.ต้น หรือ ติวเข้มวรรณคดีไทย ม.ปลาย"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                คำอธิบายเนื้อหา
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={item.description}
+                                onChange={(e) => updateItem({ description: e.target.value })}
+                                placeholder="อธิบายหัวข้อและเนื้อหาสำคัญในสื่อการเรียนรู้นี้..."
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-['Sarabun']"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-3">
+                              <label className="block text-slate-700 font-semibold mb-1">
+                                URL ของสื่อ ({item.type === 'pdf' ? 'ลิงก์ PDF / Google Drive PDF' : 'ลิงก์ YouTube'})
+                              </label>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                  type="url"
+                                  value={item.url}
+                                  onChange={(e) => updateItem({ url: e.target.value })}
+                                  placeholder={
+                                    item.type === 'pdf'
+                                      ? 'https://drive.google.com/file/d/.../view หรือ https://.../document.pdf'
+                                      : 'https://www.youtube.com/watch?v=... หรือ https://youtu.be/...'
+                                  }
+                                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white font-mono text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPreviewStudyId(isPreviewOpen ? null : item.id)
+                                  }
+                                  disabled={!item.url.trim()}
+                                  className="px-3.5 py-2 rounded-lg border border-[#7043A6]/30 bg-white text-[#4B267D] hover:bg-[#4B267D] hover:text-white transition-colors font-semibold inline-flex items-center justify-center gap-1.5 disabled:opacity-40 whitespace-nowrap"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>{isPreviewOpen ? 'ซ่อนตัวอย่าง' : 'ดูตัวอย่างลิงก์ก่อนบันทึก'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Link Preview Box before Saving */}
+                          {isPreviewOpen && item.url.trim() && (
+                            <div className="rounded-xl border border-[#D6AF55]/50 bg-white p-4 space-y-3">
+                              <div className="flex items-center justify-between gap-2 text-xs font-['Prompt']">
+                                <span className="font-semibold text-[#4B267D] flex items-center gap-1.5">
+                                  <PlayCircle className="w-4 h-4 text-[#D6AF55]" />
+                                  <span>ตรวจสอบตัวอย่างลิงก์สื่อก่อนบันทึก</span>
+                                </span>
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[#7043A6] hover:underline font-semibold"
+                                >
+                                  <span>เปิดลิงก์จริงในแท็บใหม่</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+
+                              {item.type === 'youtube' ? (
+                                ytId ? (
+                                  <div className="aspect-video max-w-lg rounded-lg overflow-hidden border border-slate-200 bg-black">
+                                    <iframe
+                                      src={`https://www.youtube.com/embed/${ytId}`}
+                                      title={item.title}
+                                      className="w-full h-full"
+                                      allowFullScreen
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs font-['Sarabun'] text-amber-900">
+                                    ไม่พบรหัสวิดีโอ YouTube ที่ถูกต้องใน URL นี้ กรุณาตรวจสอบลิงก์ เช่น{' '}
+                                    <code>https://www.youtube.com/watch?v=...</code> หรือ{' '}
+                                    <code>https://youtu.be/...</code>
+                                  </div>
+                                )
+                              ) : (
+                                <div className="text-xs font-['Sarabun'] text-slate-600 space-y-2">
+                                  <div className="p-3 rounded-lg bg-[#FAF8FD] border border-slate-200 flex items-center justify-between gap-3">
+                                    <div className="truncate font-mono text-[11px] text-slate-700">
+                                      {item.url}
+                                    </div>
+                                    <a
+                                      href={item.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-3 py-1.5 rounded-lg bg-[#4B267D] text-white font-['Prompt'] font-semibold shrink-0 inline-flex items-center gap-1"
+                                    >
+                                      <span>ทดสอบเปิดเอกสาร PDF</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* TAB: MEDIA & ALL IMAGES */}
           {activeTab === 'media' && (
             <div className="space-y-8">
@@ -566,6 +976,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
                     {
+                      name: 'โลโก้ตัวอักษร "สืบศิลป์ถิ่นอักษรฯ" (PNG โปร่งใส)',
+                      url: 'images/ครูไทยวิเศษฯ-2026 (1).png',
+                      desc: 'โลโก้หลักส่วนหัวเว็บไซต์ (Hero Static Logo)',
+                      type: 'heroLogo' as const,
+                      targetKey: 'heroLogoUrl' as keyof SiteImages,
+                    },
+                    {
                       name: 'ตรากลุ่มสาระฯ ภาษาไทย WSK',
                       url: 'images/school_wsk_emblem_1794141246706.jpg',
                       desc: 'โลโก้หัวเว็บ / โลโก้ท้ายเว็บ / Favicon',
@@ -575,7 +992,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {
                       name: 'แบนเนอร์หลัก "สืบศิลป์ถิ่นอักษร"',
                       url: 'images/hero_thai_wsk_banner_1794141245856.jpg',
-                      desc: 'ภาพพื้นหลัง Hero Section / แบนเนอร์หน้าแรก',
+                      desc: 'ภาพแบนเนอร์โครงการภาษาไทย',
                       type: 'hero' as const,
                       targetKey: 'heroBackgroundUrl' as keyof SiteImages,
                     },
@@ -684,6 +1101,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 0. Hero Static Project Logo */}
+                  <div className="md:col-span-2 bg-[#FAF8FD] p-5 rounded-2xl border border-[#D6AF55]/50 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-['Prompt'] font-bold text-sm text-[#4B267D]">
+                        ๐. โลโก้หลักส่วนหัวเว็บไซต์ (Hero Section Static Logo — ภาพนิ่ง object-contain)
+                      </span>
+                      <span className="text-[11px] font-['Prompt'] text-[#7043A6] font-semibold">
+                        แสดงเด่นบน Hero Section หน้าแรก
+                      </span>
+                    </div>
+
+                    {(!formData.siteImages?.heroLogoUrl?.trim() ||
+                      isViewerPageUrl(formData.siteImages?.heroLogoUrl)) && (
+                      <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-xs font-['Sarabun'] text-amber-950 space-y-1.5">
+                        <div className="flex items-center gap-2 font-['Prompt'] font-bold text-amber-900">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>สถานะสำหรับผู้ดูแล: ต้องการ Direct Image URL ของโลโก้โครงการ</span>
+                        </div>
+                        <p>
+                          ลิงก์ <code>https://pic.in.th/image/VSp8m6</code> เป็นหน้าเว็บดูรูปภาพที่ติดสิทธิ์เข้าสู่ระบบ (<code>pic.in.th/login</code>) จึงไม่สามารถดึงภาพโดยตรงได้ กรุณาวาง <strong>Direct Image URL จริง</strong> (เช่น <code>https://.../logo.png</code>) หรือเลือกใช้ไฟล์ภาพโลโก้ในระบบด้านล่าง
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      <div className="w-full sm:w-56 h-32 rounded-xl border border-[#D6AF55]/50 overflow-hidden shrink-0 bg-gradient-to-br from-[#2B154A] to-[#4B267D] p-3 flex items-center justify-center">
+                        <SmartImage
+                          src={formData.siteImages?.heroLogoUrl || 'images/ครูไทยวิเศษฯ-2026 (1).png'}
+                          alt="ตัวอย่างโลโก้ Hero Section"
+                          fallbackType="heroLogo"
+                          className="w-full h-full object-contain"
+                          containerClassName="w-full h-full flex items-center justify-center"
+                        />
+                      </div>
+                      <div className="flex-1 w-full space-y-2">
+                        <input
+                          type="text"
+                          value={formData.siteImages?.heroLogoUrl || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              siteImages: {
+                                ...formData.siteImages,
+                                heroLogoUrl: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="วาง Direct Image URL (.png/.jpg/.webp) หรือ images/ครูไทยวิเศษฯ-2026 (1).png"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs bg-white"
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                siteImages: {
+                                  ...formData.siteImages,
+                                  heroLogoUrl: 'images/ครูไทยวิเศษฯ-2026 (1).png',
+                                },
+                              })
+                            }
+                            className="px-3 py-1.5 rounded-lg bg-[#4B267D] text-white text-[11px] font-['Prompt'] font-semibold hover:bg-[#30283A] transition-colors"
+                          >
+                            ใช้ไฟล์โลโก้ตัวอักษรทองในระบบ (ครูไทยวิเศษฯ-2026)
+                          </button>
+                          <span className="text-[11px] text-slate-500 font-['Sarabun']">
+                            แสดงผลแบบ object-fit: contain ไม่ครอบตัดรายละเอียดภาพ
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* 1. Header Logo */}
                   <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
                     <div className="flex items-center justify-between">
@@ -1016,16 +1507,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 2: SLIDES */}
+          {/* TAB 2: HERO TEXT & LEGACY SLIDES */}
           {activeTab === 'slides' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
-                    จัดการภาพสไลด์หน้าแรก (Hero Image Slider)
+                    จัดการข้อความส่วนหัวเว็บไซต์ (Hero Section)
                   </h3>
                   <p className="text-xs font-['Sarabun'] text-slate-500">
-                    * หากมีรูปเดียวจะแสดงเป็นภาพนิ่ง หากมีหลายรูปจะเปลี่ยนทุก ๑๐ วินาทีอัตโนมัติ
+                    * ส่วนหัวเว็บไซต์แสดงโลโก้โครงการแบบภาพนิ่ง (เปลี่ยนโลโก้ได้ที่แท็บ &quot;จัดการรูปภาพทุกจุด&quot;) และใช้ข้อความหลักจากรายการลำดับที่ 1 ด้านล่าง
                   </p>
                 </div>
                 <button
@@ -1034,7 +1525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="px-3.5 py-1.5 rounded-xl text-xs font-['Prompt'] font-semibold bg-[#FAF8FD] border border-[#7043A6]/30 text-[#4B267D] hover:bg-[#4B267D] hover:text-white transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>เพิ่มภาพสไลด์</span>
+                  <span>เพิ่มรายการข้อความ</span>
                 </button>
               </div>
 

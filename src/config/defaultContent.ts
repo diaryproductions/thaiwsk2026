@@ -57,10 +57,22 @@ export interface ExamLevel {
   instructions: string[];
 }
 
+export interface StudyMaterial {
+  id: string;
+  level: 'junior' | 'senior'; // ม.ต้น (ม.1–ม.3) | ม.ปลาย (ม.4–ม.6)
+  type: 'pdf' | 'youtube'; // เอกสาร PDF | วิดีโอ YouTube
+  title: string;
+  description: string;
+  url: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface SiteImages {
   headerLogoUrl: string; // โลโก้หัวเว็บ / แถบเมนู
   faviconUrl: string;   // ไอคอนเว็บ
-  heroBackgroundUrl: string; // ภาพพื้นหลัง Hero Section
+  heroLogoUrl: string;  // โลโก้หลักส่วนหัวเว็บไซต์ (Hero Section - ภาพนิ่ง)
+  heroBackgroundUrl: string; // ภาพพื้นหลัง Hero Section (ตัวเลือกเสริม)
   aboutMainImageUrl: string;  // รูปหลักเกี่ยวกับโครงการ
   aboutSecondaryImageUrl: string; // รูปประกอบรองเกี่ยวกับโครงการ
   aboutTeacherTeamUrl: string; // รูปรวมคณะครูภาษาไทย
@@ -82,6 +94,7 @@ export interface SiteContent {
   };
   siteImages: SiteImages;
   heroSlides: HeroSlide[];
+  studyMaterials: StudyMaterial[];
   about: {
     title: string;
     leadText: string;
@@ -127,6 +140,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   siteImages: {
     headerLogoUrl: 'images/school_wsk_emblem_1794141246706.jpg',
     faviconUrl: 'favicon.svg',
+    heroLogoUrl: '',
     heroBackgroundUrl: 'images/hero_thai_wsk_banner_1794141245856.jpg',
     aboutMainImageUrl: 'images/about_academic_thai_1794141247386.jpg',
     aboutSecondaryImageUrl: 'images/thai_literature_contest_1794141246113.jpg',
@@ -136,6 +150,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     certificateBannerUrl: 'images/thai_literature_contest_1794141246113.jpg',
     footerLogoUrl: 'images/school_wsk_emblem_1794141246706.jpg',
   },
+  studyMaterials: [],
   heroSlides: [
     {
       id: 'slide-1',

@@ -1,7 +1,8 @@
 import React from 'react';
-import { HeroSlider } from '../components/HeroSlider';
+import { HeroSection } from '../components/HeroSection';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { QuickActions } from '../components/QuickActions';
+import { StudyResourcesSection } from '../components/StudyResourcesSection';
 import { AboutSection } from '../components/AboutSection';
 import { AwardCriteria } from '../components/AwardCriteria';
 import { ScheduleSection } from '../components/ScheduleSection';
@@ -16,10 +17,10 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ content, onSelectTab }) => {
   return (
-    <div className="space-y-0">
-      {/* 1. Hero Banner with Image Slider */}
-      <HeroSlider
-        slides={content.heroSlides}
+    <div className="space-y-0 pb-8">
+      {/* 1. Hero Section (Static Prominent Project Logo, No Slideshow) */}
+      <HeroSection
+        content={content}
         onNavigate={(tab) => onSelectTab(tab)}
       />
 
@@ -32,16 +33,19 @@ export const HomePage: React.FC<HomePageProps> = ({ content, onSelectTab }) => {
       {/* 3. Three Quick Action Cards */}
       <QuickActions onSelectTab={onSelectTab} />
 
-      {/* 4. About the Academic Project */}
+      {/* 4. Study & Review Resources (ม.ต้น & ม.ปลาย: PDF & YouTube) */}
+      <StudyResourcesSection materials={content.studyMaterials || []} />
+
+      {/* 5. About the Academic Project */}
       <AboutSection about={content.about} />
 
-      {/* 5. Award Criteria */}
+      {/* 6. Award Criteria */}
       <AwardCriteria criteria={content.awardCriteria} />
 
-      {/* 6. Important Schedule */}
+      {/* 7. Important Schedule */}
       <ScheduleSection schedule={content.schedule} />
 
-      {/* 7. Announcements */}
+      {/* 8. Announcements */}
       <AnnouncementsSection announcements={content.announcements} />
     </div>
   );

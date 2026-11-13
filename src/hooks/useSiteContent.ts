@@ -42,7 +42,38 @@ export function useSiteContent() {
       if (!isMountedRef.current) return;
 
       if (result.success && result.content) {
-        setContent(result.content);
+        const fetched = result.content;
+        const merged: SiteContent = {
+          ...DEFAULT_SITE_CONTENT,
+          ...fetched,
+          siteMeta: {
+            ...DEFAULT_SITE_CONTENT.siteMeta,
+            ...(fetched.siteMeta || {}),
+          },
+          siteImages: {
+            ...DEFAULT_SITE_CONTENT.siteImages,
+            ...(fetched.siteImages || {}),
+          },
+          about: {
+            ...DEFAULT_SITE_CONTENT.about,
+            ...(fetched.about || {}),
+          },
+          instructions: {
+            ...DEFAULT_SITE_CONTENT.instructions,
+            ...(fetched.instructions || {}),
+          },
+          footer: {
+            ...DEFAULT_SITE_CONTENT.footer,
+            ...(fetched.footer || {}),
+          },
+          studyMaterials: Array.isArray(fetched.studyMaterials) ? fetched.studyMaterials : [],
+          heroSlides: Array.isArray(fetched.heroSlides) ? fetched.heroSlides : DEFAULT_SITE_CONTENT.heroSlides,
+          awardCriteria: Array.isArray(fetched.awardCriteria) ? fetched.awardCriteria : DEFAULT_SITE_CONTENT.awardCriteria,
+          schedule: Array.isArray(fetched.schedule) ? fetched.schedule : DEFAULT_SITE_CONTENT.schedule,
+          announcements: Array.isArray(fetched.announcements) ? fetched.announcements : DEFAULT_SITE_CONTENT.announcements,
+          exams: Array.isArray(fetched.exams) ? fetched.exams : DEFAULT_SITE_CONTENT.exams,
+        };
+        setContent(merged);
         setIsBackendConnected(result.isFromBackend);
         setLastSyncTime(new Date());
         setSyncError(null);

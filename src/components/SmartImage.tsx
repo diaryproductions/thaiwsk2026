@@ -54,6 +54,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
 
       {/* Actual Image */}
       <img
+        referrerPolicy="no-referrer"
         {...props}
         src={currentSrc}
         alt={alt}
