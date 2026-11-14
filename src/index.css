@@ -1,82 +1,218 @@
+
 @import "tailwindcss";
 
-/* เติม ?v=2 ต่อท้าย URL เพื่อบังคับล้างแคชฟอนต์ในมือถือ */
+/* ========================================
+   LINE SEED SANS TH — LOCAL WEB FONTS
+======================================== */
+
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Th.ttf?v=2') format('truetype');
-  font-weight: 300;
+  src: url('/fonts/LINESeedSansTH_A_Th.ttf') format('truetype');
+  font-weight: 100 300;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Rg.ttf?v=2') format('truetype');
-  font-weight: 400;
+  src: url('/fonts/LINESeedSansTH_A_Rg.ttf') format('truetype');
+  font-weight: 400 500;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Bd.ttf?v=2') format('truetype');
-  font-weight: 700;
+  src: url('/fonts/LINESeedSansTH_A_Bd.ttf') format('truetype');
+  font-weight: 600 700;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_XBd.ttf?v=2') format('truetype');
+  src: url('/fonts/LINESeedSansTH_A_XBd.ttf') format('truetype');
   font-weight: 800;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_He.ttf?v=2') format('truetype');
+  src: url('/fonts/LINESeedSansTH_A_He.ttf') format('truetype');
   font-weight: 900;
+  font-style: normal;
   font-display: swap;
 }
 
-@layer base {
-  *, ::before, ::after {
-    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  }
-  
+/* ========================================
+   TAILWIND CSS FONT CONFIGURATION
+======================================== */
+
+@theme {
+  --font-sans: 'LINE Seed Sans TH', sans-serif;
+  --font-serif: 'LINE Seed Sans TH', sans-serif;
+  --font-mono: 'LINE Seed Sans TH', sans-serif;
+}
+
+/* ========================================
+   GLOBAL TYPOGRAPHY
+======================================== */
+
+:root {
+  --site-font: 'LINE Seed Sans TH', sans-serif;
+
+  font-family: var(--site-font);
+
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  font-synthesis: none;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  font-family: var(--site-font) !important;
+}
+
+body {
+  font-weight: 400;
+  margin: 0;
+}
+
+/* กำหนดฟอนต์ให้ข้อความทุกส่วน */
+
+*,
+*::before,
+*::after {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+label,
+li,
+td,
+th,
+small,
+strong,
+b,
+blockquote {
+  font-family: var(--site-font) !important;
+}
+
+/* กำหนดฟอนต์ให้ปุ่มและช่องกรอกข้อมูล */
+
+button,
+input,
+select,
+textarea,
+option,
+optgroup {
+  font-family: var(--site-font) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--site-font) !important;
+}
+
+/* ป้องกันการเรียกฟอนต์เดิมจาก Component */
+
+.font-sans,
+.font-serif,
+.font-mono,
+.font-cinzel,
+.font-prompt,
+.font-sarabun {
+  font-family: var(--site-font) !important;
+}
+
+/* ========================================
+   MOBILE & SAFARI COMPATIBILITY
+======================================== */
+
+@media screen and (max-width: 768px) {
+  html,
   body {
-    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-family: var(--site-font) !important;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    font-family: var(--site-font) !important;
   }
 }
 
-.font-cinzel {
-  font-family: 'Cinzel', serif !important;
-}
+/* ========================================
+   ANIMATIONS & REVEALS
+======================================== */
 
-/* อニメชันและการแสดงผล (Animations & Reveals) */
 @keyframes wskFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes wskFadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-wsk-fade-in {
-  animation: wskFadeIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wskFadeIn 420ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .animate-wsk-fade-up {
-  animation: wskFadeUp 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wskFadeUp 460ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.animate-wsk-delay-1 { animation-delay: 80ms; }
-.animate-wsk-delay-2 { animation-delay: 160ms; }
-.animate-wsk-delay-3 { animation-delay: 240ms; }
+.animate-wsk-delay-1 {
+  animation-delay: 80ms;
+}
+
+.animate-wsk-delay-2 {
+  animation-delay: 160ms;
+}
+
+.animate-wsk-delay-3 {
+  animation-delay: 240ms;
+}
 
 .reveal-base {
   opacity: 0;
   transform: translateY(14px);
-  transition: opacity 460ms cubic-bezier(0.22, 1, 0.36, 1),
+
+  transition:
+    opacity 460ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -85,7 +221,12 @@
   transform: translateY(0);
 }
 
+/* ========================================
+   REDUCED MOTION
+======================================== */
+
 @media (prefers-reduced-motion: reduce) {
+
   .animate-wsk-fade-in,
   .animate-wsk-fade-up,
   .animate-wsk-delay-1,
@@ -95,23 +236,39 @@
     opacity: 1 !important;
     transform: none !important;
   }
+
   .reveal-base,
   .reveal-visible {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
   }
+
 }
 
+/* ========================================
+   PRINT CONFIGURATION
+======================================== */
+
 @media print {
+
   body {
     background: white !important;
     color: black !important;
+    font-family: var(--site-font) !important;
   }
-  .no-print { display: none !important; }
-  .print-only { display: block !important; }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
   @page {
     size: A4 landscape;
     margin: 0;
   }
+
 }
