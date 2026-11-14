@@ -1,42 +1,41 @@
 @import "tailwindcss";
 
-/* 1. นำเข้าฟอนต์ LINE Seed Sans TH แบบชี้ URL เต็มผ่าน GitHub Pages เพื่อให้มือถือโหลดได้ชัวร์ */
+/* เติม ?v=2 ต่อท้าย URL เพื่อบังคับล้างแคชฟอนต์ในมือถือ */
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Th.ttf') format('truetype');
+  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Th.ttf?v=2') format('truetype');
   font-weight: 300;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Rg.ttf') format('truetype');
+  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Rg.ttf?v=2') format('truetype');
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Bd.ttf') format('truetype');
+  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_Bd.ttf?v=2') format('truetype');
   font-weight: 700;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_XBd.ttf') format('truetype');
+  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_XBd.ttf?v=2') format('truetype');
   font-weight: 800;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_He.ttf') format('truetype');
+  src: url('https://diaryproductions.github.io/thaiwsk2026/fonts/LINESeedSansTH_A_He.ttf?v=2') format('truetype');
   font-weight: 900;
   font-display: swap;
 }
 
-/* 2. บังคับใช้ฟอนต์ LINE Seed Sans TH ทั่วทั้งเว็บไซต์แบบครอบจักรวาล */
 @layer base {
   *, ::before, ::after {
     font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -51,7 +50,7 @@
   font-family: 'Cinzel', serif !important;
 }
 
-/* 3. อニメชันและการแสดงผล (Animations & Reveals) */
+/* อニメชันและการแสดงผล (Animations & Reveals) */
 @keyframes wskFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -104,7 +103,6 @@
   }
 }
 
-/* 4. ตั้งค่าสำหรับการพิมพ์ */
 @media print {
   body {
     background: white !important;
