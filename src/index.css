@@ -1,5 +1,62 @@
 @import "tailwindcss";
 
+/* 1. นำเข้าไฟล์ฟอนต์ LINE Seed Sans TH */
+@font-face {
+  font-family: 'LINE Seed Sans TH';
+  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Th.ttf') format('truetype');
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LINE Seed Sans TH';
+  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Rg.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LINE Seed Sans TH';
+  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Bd.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LINE Seed Sans TH';
+  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_XBd.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LINE Seed Sans TH';
+  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_He.ttf') format('truetype');
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* 2. ตั้งค่าฟอนต์เริ่มต้นของเว็บไซต์ */
+@layer base {
+  body {
+    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* 3. คลาสเสริมสำหรับฟอนต์ */
+.font-prompt {
+  font-family: 'LINE Seed Sans TH', sans-serif;
+}
+
+.font-sarabun {
+  font-family: 'LINE Seed Sans TH', sans-serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+/* 4. อนิเมชันและการแสดงผล (Animations & Reveals) */
 @keyframes wskFadeIn {
   from {
     opacity: 0;
@@ -68,5 +125,23 @@
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+}
+
+/* 5. ตั้งค่าสำหรับการพิมพ์ (Print Style) */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 0;
   }
 }
