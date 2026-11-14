@@ -1,9 +1,9 @@
 import React from 'react';
 import { BookOpen, Award, CheckCircle } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
-import { SmartImage } from './SmartImage';
-import { isViewerPageUrl } from '../utils/imageUrl';
 import { ThaiOrnament } from './ThaiOrnament';
+import { toArabicNumerals } from '../utils/thaiDigits';
+import heroProjectLogo from '../assets/images/ครูไทยวิเศษฯ-2026 (1).png';
 
 interface HeroSectionProps {
   content: SiteContent;
@@ -11,48 +11,7 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ content, onNavigate }) => {
-  // Resolve Hero Logo from ManagedSiteImage first, then fallback to siteImages.heroLogoUrl and bundled asset
-  const heroLogoItem = (content.siteImageItems || []).find(
-    (img) => img.section === 'heroLogo'
-  );
-  const isHeroLogoVisible = heroLogoItem ? heroLogoItem.isVisible !== false : true;
-
-  const rawCandidate =
-    (heroLogoItem?.url && heroLogoItem.url.trim()) ||
-    (content.siteImages?.heroLogoUrl && content.siteImages.heroLogoUrl.trim()) ||
-    '';
-
-  const resolvedHeroSrc =
-    !rawCandidate || isViewerPageUrl(rawCandidate)
-      ? 'images/ครูไทยวิเศษฯ-2026 (1).png'
-      : rawCandidate;
-
-  const logoWidth = heroLogoItem?.width?.trim() || '380px';
-  const logoHeight = heroLogoItem?.height?.trim() || '190px';
-  const logoFitClass = heroLogoItem?.objectFit === 'cover' ? 'object-cover' : 'object-contain';
-  const logoJustifyClass =
-    heroLogoItem?.alignment === 'left'
-      ? 'justify-start'
-      : heroLogoItem?.alignment === 'right'
-      ? 'justify-end'
-      : 'justify-center';
-  const logoSpacing =
-    heroLogoItem && Number.isFinite(heroLogoItem.spacing)
-      ? Math.max(0, Math.min(heroLogoItem.spacing, 48))
-      : 12;
-
-  const firstSlide = content.heroSlides?.[0];
-  const headline =
-    content.siteMeta?.subtitle || firstSlide?.title || 'สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย';
-  const academicYear = content.siteMeta?.academicYear || 'ปีการศึกษา ๒๕๖๙';
-
-  // Ensure description never repeats the single-line project name verbatim
-  const rawSubtitle = (firstSlide?.subtitle || '').trim();
-  const isDuplicateProjectName =
-    !rawSubtitle || rawSubtitle.startsWith('โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย');
-  const conciseDescription = isDuplicateProjectName
-    ? 'กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ" · ส่งเสริมทักษะการอ่าน วรรณคดี และหลักภาษาไทยสู่ความเป็นเลิศ'
-    : rawSubtitle;
+  const academicYear = toArabicNumerals(content.siteMeta?.academicYear || 'ปีการศึกษา 2569');
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#3A1B66] via-[#4B267D] to-[#613799] text-white border-b-2 border-[#D6AF55]/50">
@@ -66,59 +25,43 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ content, onNavigate })
         className="pointer-events-none absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D6AF55]/70 to-transparent"
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-9 sm:py-12 lg:py-14">
         <div className="flex flex-col items-center text-center">
-          {/* 1. Prominent Centered Project Logo (No oversized bulky box, clean object-contain, zero public error notices) */}
-          {isHeroLogoVisible && (
+          {/* 1. Prominent Centered Project Logo (700px x 180px on desktop, responsive object-contain) */}
+          <div className="w-full max-w-[700px] h-[105px] sm:h-[145px] md:h-[180px] mx-auto mb-4 flex items-center justify-center animate-wsk-fade-in relative">
             <div
-              style={{ marginBottom: `${logoSpacing}px` }}
-              className={`w-full flex ${logoJustifyClass} animate-wsk-fade-in`}
-            >
-              <div
-                style={{
-                  width: logoWidth,
-                  maxWidth: '100%',
-                  height: logoHeight !== 'auto' ? logoHeight : undefined,
-                }}
-                className="relative max-w-full flex items-center justify-center"
-              >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-8 inset-y-4 rounded-full bg-[#F4E4B5]/12 blur-2xl"
-                />
-                <SmartImage
-                  src={resolvedHeroSrc}
-                  alt={`โลโก้โครงการ ${headline}`}
-                  fallbackType="heroLogo"
-                  className={`relative w-full h-full max-w-full ${logoFitClass} drop-shadow-[0_8px_22px_rgba(20,8,40,0.45)]`}
-                  containerClassName="w-full h-full flex items-center justify-center bg-transparent"
-                />
-              </div>
-            </div>
-          )}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-10 inset-y-4 rounded-full bg-[#F4E4B5]/12 blur-2xl"
+            />
+            <img
+              src={heroProjectLogo}
+              alt="โลโก้โครงการ สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย"
+              className="relative w-full h-full object-contain drop-shadow-[0_8px_22px_rgba(20,8,40,0.45)]"
+            />
+          </div>
 
-          {/* 2. Single-Line Project Name + Academic Year Kicker */}
-          <p className="animate-wsk-fade-up animate-wsk-delay-1 text-xs sm:text-sm md:text-[15px] font-['Prompt'] font-medium text-[#F4E4B5] tracking-wide md:whitespace-nowrap max-w-full">
+          {/* 2. Single-Line Project Name + Academic Year Kicker (subordinate size) */}
+          <p className="animate-wsk-fade-up animate-wsk-delay-1 text-xs sm:text-[13px] font-['Prompt'] font-medium text-[#F4E4B5] tracking-wide md:whitespace-nowrap max-w-full">
             โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย · {academicYear}
           </p>
 
-          {/* 3. Main Activity Headline */}
-          <h1 className="animate-wsk-fade-up animate-wsk-delay-1 mt-3 text-3xl sm:text-4xl lg:text-[2.95rem] font-['Prompt'] font-bold text-white tracking-tight leading-[1.18] text-balance drop-shadow-xs">
-            {headline}
+          {/* 3. Main Activity Headline (balanced smaller scale so project logo stands out) */}
+          <h1 className="animate-wsk-fade-up animate-wsk-delay-1 mt-2 text-2xl sm:text-3xl lg:text-[2.15rem] font-['Prompt'] font-bold text-white tracking-tight leading-[1.2] text-balance drop-shadow-xs">
+            สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย
           </h1>
 
           {/* Subtle Thai Academic Divider */}
-          <div className="animate-wsk-fade-up animate-wsk-delay-2 my-4">
+          <div className="animate-wsk-fade-up animate-wsk-delay-2 my-3.5">
             <ThaiOrnament variant="dark" />
           </div>
 
           {/* 4. Concise Activity Description */}
-          <p className="animate-wsk-fade-up animate-wsk-delay-2 text-sm sm:text-base lg:text-[17px] text-white/90 font-['Sarabun'] leading-relaxed max-w-2xl mx-auto">
-            {conciseDescription}
+          <p className="animate-wsk-fade-up animate-wsk-delay-2 text-xs sm:text-sm lg:text-[15px] text-white/90 font-['Sarabun'] leading-relaxed max-w-2xl mx-auto">
+            กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน &quot;วิเศษสมุทคุณ&quot; · ส่งเสริมทักษะการอ่าน วรรณคดี และหลักภาษาไทยสู่ความเป็นเลิศ
           </p>
 
           {/* 5. Three Centered Action Buttons */}
-          <div className="animate-wsk-fade-up animate-wsk-delay-3 mt-7 flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-['Prompt'] text-sm">
+          <div className="animate-wsk-fade-up animate-wsk-delay-3 mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-['Prompt'] text-sm">
             <button
               type="button"
               onClick={() => onNavigate('exam')}

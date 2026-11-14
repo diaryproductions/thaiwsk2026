@@ -57,7 +57,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             ระบบจัดการสำหรับแอดมิน
           </h2>
           <p className="text-xs font-['Sarabun'] text-white/80 mt-1">
-            THAI WSK 2026 — โรงเรียนกระทุ่มแบน &quot;วิเศษสมุทคุณ&quot;
+            สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย — โรงเรียนกระทุ่มแบน &quot;วิเศษสมุทคุณ&quot;
           </p>
         </div>
 

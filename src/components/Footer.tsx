@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Phone, Mail, Globe, MapPin, ExternalLink, Code2 } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
-import { SmartImage } from './SmartImage';
+import { APP_CONFIG } from '../config/constants';
+import { toArabicNumerals } from '../utils/thaiDigits';
+import bundledLogoFallback from '../assets/images/logo-thaiwsk.png';
 
 interface FooterProps {
   footer: SiteContent['footer'];
-  logoUrl?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ footer, logoUrl }) => {
+export const Footer: React.FC<FooterProps> = ({ footer }) => {
+  const [logoSrc, setLogoSrc] = useState<string>(APP_CONFIG.LOGO_URL);
+
   return (
     <footer className="bg-[#30283A] text-slate-300 font-['Sarabun'] border-t-2 border-[#D6AF55]/50 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-7">
@@ -17,36 +20,40 @@ export const Footer: React.FC<FooterProps> = ({ footer, logoUrl }) => {
           {/* Column 1: School Identity & Contact */}
           <div className="md:col-span-7 space-y-2">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#4B267D] border border-[#D6AF55]/80 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
-                <SmartImage
-                  src={logoUrl || 'images/school_wsk_emblem_1794141246706.jpg'}
-                  alt="ตราโรงเรียน"
-                  fallbackType="logo"
-                  className="w-full h-full object-cover rounded-full"
-                  containerClassName="w-full h-full rounded-full"
+              <div className="w-11 h-11 rounded-xl bg-white border border-[#D6AF55]/80 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                <img
+                  src={logoSrc}
+                  alt={`โลโก้ ${APP_CONFIG.APP_NAME}`}
+                  referrerPolicy="no-referrer"
+                  onError={() => {
+                    if (logoSrc !== bundledLogoFallback) {
+                      setLogoSrc(bundledLogoFallback);
+                    }
+                  }}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
                 <h3 className="text-sm font-['Prompt'] font-semibold text-white leading-tight">
-                  {footer.department}
+                  {toArabicNumerals(footer.department)}
                 </h3>
                 <p className="text-xs font-['Prompt'] text-[#D6AF55] leading-tight mt-0.5">
-                  {footer.school}
+                  {toArabicNumerals(footer.school)}
                 </p>
               </div>
             </div>
 
             <p className="text-xs text-slate-300/90 leading-snug flex items-start gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#D6AF55] shrink-0 mt-0.5" />
-              <span>{footer.address}</span>
+              <span>{toArabicNumerals(footer.address)}</span>
             </p>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 pt-0.5">
               <span className="inline-flex items-center gap-1">
                 <Phone className="w-3 h-3 text-[#D6AF55]" />
-                <span>โทร. {footer.telephone}</span>
+                <span>โทร. {toArabicNumerals(footer.telephone)}</span>
               </span>
-              <span className="text-slate-400">โทรสาร {footer.fax}</span>
+              <span className="text-slate-400">โทรสาร {toArabicNumerals(footer.fax)}</span>
               <span className="inline-flex items-center gap-1">
                 <Mail className="w-3 h-3 text-[#D6AF55]" />
                 <a href={`mailto:${footer.email}`} className="hover:text-white transition-colors">
@@ -73,13 +80,13 @@ export const Footer: React.FC<FooterProps> = ({ footer, logoUrl }) => {
               <span>ผู้พัฒนาระบบและจัดทำเว็บไซต์</span>
             </div>
             <p className="text-sm font-['Prompt'] font-semibold text-white leading-snug">
-              {footer.developerName}
+              {toArabicNumerals(footer.developerName)}
             </p>
             <p className="text-xs text-slate-300/90 leading-snug">
-              {footer.developerRole}
+              {toArabicNumerals(footer.developerRole)}
             </p>
             <p className="text-xs text-[#D6AF55]/95 font-['Prompt']">
-              {footer.developerContact}
+              {toArabicNumerals(footer.developerContact)}
             </p>
           </div>
         </div>
@@ -87,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({ footer, logoUrl }) => {
         {/* Bottom Copyright Row */}
         <div className="mt-5 pt-3.5 border-t border-white/10 text-[11px] text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-center sm:text-left">
           <div>
-            © ๒๕๖๙ THAI WSK 2026 · {footer.school} — สงวนลิขสิทธิ์
+            © 2569 สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย · {toArabicNumerals(footer.school)} — สงวนลิขสิทธิ์
           </div>
           <div>
             โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย

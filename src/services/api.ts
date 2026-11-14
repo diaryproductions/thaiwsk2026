@@ -1,5 +1,5 @@
 /**
- * API Service for THAI WSK 2026
+ * API Service for สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย
  * Handles communication with Google Apps Script Web App Connector & Google Sheets Data Processing
  * Spreadsheet ID: 1EsneYlqKXHZakue-7fhHWzfNYOgmgitfUrMy-kzqiTI
  * 
@@ -118,12 +118,12 @@ export async function initSharedConfig(): Promise<SharedAppConfig | null> {
         const data = (await res.json()) as SharedAppConfig;
         if (data && typeof data === 'object') {
           cachedSharedConfig = data;
-          console.info('[THAI WSK 2026] Loaded shared config successfully from:', configUrl);
+          console.info('[สืบศิลป์ถิ่นอักษร] Loaded shared config successfully from:', configUrl);
           return data;
         }
       }
     } catch (e: any) {
-      console.warn('[THAI WSK 2026] Could not load app-config.json (using defaults/env):', e?.message);
+      console.warn('[สืบศิลป์ถิ่นอักษร] Could not load app-config.json (using defaults/env):', e?.message);
     }
     return null;
   })();
@@ -494,7 +494,7 @@ export async function checkBackendHealth(targetUrlOverride?: string): Promise<He
         provenance,
         url: urlToTest,
         isDevUrl: false,
-        message: 'เชื่อมต่อ Google Apps Script และ Google Sheets สำเร็จเรียบร้อย ครบทั้ง ๖ ขั้นตอน',
+        message: 'เชื่อมต่อ Google Apps Script และ Google Sheets สำเร็จเรียบร้อย ครบทั้ง 6 ขั้นตอน',
         checks,
         data,
       };
@@ -520,7 +520,7 @@ export async function checkBackendHealth(targetUrlOverride?: string): Promise<He
       isDevUrl: false,
       errorType: 'CORS_OR_NETWORK',
       message: isAbort
-        ? 'การเชื่อมต่อ Google Apps Script หมดเวลา (Timeout เกิน ๑๒ วินาที)'
+        ? 'การเชื่อมต่อ Google Apps Script หมดเวลา (Timeout เกิน 12 วินาที)'
         : 'ไม่สามารถเชื่อมต่อ Google Apps Script Web App ได้ (อาจเกิดจากปัญหาเครือข่าย หรือสิทธิ์ Who has access ยังไม่ได้ตั้งเป็น "Anyone")',
       technicalDetail: `${err?.name}: ${err?.message}`,
       checks,
@@ -569,12 +569,12 @@ export async function searchScore(params: {
 
     const text = await res.text();
     if (text.includes('<html') || text.includes('accounts.google.com')) {
-      console.error('[THAI WSK 2026] GAS returned Google Login HTML. Permissions must be "Anyone".');
+      console.error('[สืบศิลป์ถิ่นอักษร] GAS returned Google Login HTML. Permissions must be "Anyone".');
       return {
         success: false,
         isBackendConnected: false,
         errorType: 'AUTH_REQUIRED',
-        message: 'ระบบยังไม่สามารถเข้าถึงฐานข้อมูลได้ (ติดสิทธิ์การเข้าถึง กรุณาแจ้งผู้ดูแลระบบให้ตั้งค่าสิทธิ์ Web App เป็น Anyone)',
+        message: 'ระบบยังไม่สามารถเข้าถึงฐานข้อมูลได้ (ติดสิทธิ์การเข้าถึง กรุณาติดต่อผู้ดูแลระบบให้ตั้งค่าสิทธิ์ Web App เป็น Anyone)',
       };
     }
 
@@ -584,7 +584,7 @@ export async function searchScore(params: {
       isBackendConnected: true,
     };
   } catch (err: any) {
-    console.error('[THAI WSK 2026] Search score error:', err);
+    console.error('[สืบศิลป์ถิ่นอักษร] Search score error:', err);
     return {
       success: false,
       isBackendConnected: false,
@@ -635,12 +635,12 @@ export async function searchCertificate(params: {
 
     const text = await res.text();
     if (text.includes('<html') || text.includes('accounts.google.com')) {
-      console.error('[THAI WSK 2026] GAS returned Google Login HTML. Permissions must be "Anyone".');
+      console.error('[สืบศิลป์ถิ่นอักษร] GAS returned Google Login HTML. Permissions must be "Anyone".');
       return {
         success: false,
         isBackendConnected: false,
         errorType: 'AUTH_REQUIRED',
-        message: 'ระบบยังไม่สามารถเข้าถึงฐานข้อมูลเกียรติบัตรได้ (กรุณาแจ้งผู้ดูแลระบบให้ตั้งค่าสิทธิ์ Web App เป็น Anyone)',
+        message: 'ระบบยังไม่สามารถเข้าถึงฐานข้อมูลเกียรติบัตรได้ (กรุณาติดต่อผู้ดูแลระบบให้ตั้งค่าสิทธิ์ Web App เป็น Anyone)',
       };
     }
 
@@ -650,7 +650,7 @@ export async function searchCertificate(params: {
       isBackendConnected: true,
     };
   } catch (err: any) {
-    console.error('[THAI WSK 2026] Search cert error:', err);
+    console.error('[สืบศิลป์ถิ่นอักษร] Search cert error:', err);
     return {
       success: false,
       isBackendConnected: false,

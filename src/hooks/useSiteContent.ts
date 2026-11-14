@@ -1,24 +1,82 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { SiteContent, DEFAULT_SITE_CONTENT, DEFAULT_SITE_IMAGE_ITEMS } from '../config/defaultContent';
+import { SiteContent, DEFAULT_SITE_CONTENT } from '../config/defaultContent';
 import { fetchSiteContent, getApiBaseUrl, initSharedConfig } from '../services/api';
 import { APP_CONFIG } from '../config/constants';
 
+function mergeFetchedContent(fetched: Partial<SiteContent>): SiteContent {
+  return {
+    ...DEFAULT_SITE_CONTENT,
+    ...fetched,
+    siteMeta: {
+      ...DEFAULT_SITE_CONTENT.siteMeta,
+      ...(fetched.siteMeta || {}),
+    },
+    siteImages: {
+      ...DEFAULT_SITE_CONTENT.siteImages,
+      ...(fetched.siteImages || {}),
+    },
+    siteImageItems: Array.isArray(fetched.siteImageItems) ? fetched.siteImageItems : [],
+    heroSlides: Array.isArray(fetched.heroSlides) ? fetched.heroSlides : [],
+    about: {
+      ...DEFAULT_SITE_CONTENT.about,
+      ...(fetched.about || {}),
+      bodyParagraphs: Array.isArray(fetched.about?.bodyParagraphs)
+        ? fetched.about.bodyParagraphs
+        : DEFAULT_SITE_CONTENT.about.bodyParagraphs,
+      objectives: Array.isArray(fetched.about?.objectives)
+        ? fetched.about.objectives
+        : DEFAULT_SITE_CONTENT.about.objectives,
+    },
+    instructions: {
+      ...DEFAULT_SITE_CONTENT.instructions,
+      ...(fetched.instructions || {}),
+      examGeneral: Array.isArray(fetched.instructions?.examGeneral)
+        ? fetched.instructions.examGeneral
+        : DEFAULT_SITE_CONTENT.instructions.examGeneral,
+      scoreCheck: Array.isArray(fetched.instructions?.scoreCheck)
+        ? fetched.instructions.scoreCheck
+        : DEFAULT_SITE_CONTENT.instructions.scoreCheck,
+      certificate: Array.isArray(fetched.instructions?.certificate)
+        ? fetched.instructions.certificate
+        : DEFAULT_SITE_CONTENT.instructions.certificate,
+    },
+    footer: {
+      ...DEFAULT_SITE_CONTENT.footer,
+      ...(fetched.footer || {}),
+    },
+    studyMaterials: Array.isArray(fetched.studyMaterials) ? fetched.studyMaterials : [],
+    awardCriteria: Array.isArray(fetched.awardCriteria)
+      ? fetched.awardCriteria
+      : DEFAULT_SITE_CONTENT.awardCriteria,
+    schedule: Array.isArray(fetched.schedule) ? fetched.schedule : DEFAULT_SITE_CONTENT.schedule,
+    announcements: Array.isArray(fetched.announcements)
+      ? fetched.announcements
+      : DEFAULT_SITE_CONTENT.announcements,
+    exams:
+      Array.isArray(fetched.exams) && fetched.exams.length > 0
+        ? fetched.exams
+        : DEFAULT_SITE_CONTENT.exams,
+  };
+}
+
 export function useSiteContent() {
-  // Always initialize from default master content (NEVER use localStorage as primary database)
+  // Always initialize from default master content until Central Database responds
+  // (NEVER use localStorage/sessionStorage as primary database)
   const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
   const isMountedRef = useRef(true);
+  const hasLoadedFromBackendRef = useRef(false);
 
   // Clean up any legacy localStorage content to prevent stale local overrides
   useEffect(() => {
     try {
       localStorage.removeItem('thai_wsk_site_content');
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, []);
@@ -42,46 +100,20 @@ export function useSiteContent() {
       if (!isMountedRef.current) return;
 
       if (result.success && result.content) {
-        const fetched = result.content;
-        const merged: SiteContent = {
-          ...DEFAULT_SITE_CONTENT,
-          ...fetched,
-          siteMeta: {
-            ...DEFAULT_SITE_CONTENT.siteMeta,
-            ...(fetched.siteMeta || {}),
-          },
-          siteImages: {
-            ...DEFAULT_SITE_CONTENT.siteImages,
-            ...(fetched.siteImages || {}),
-          },
-          siteImageItems:
-            Array.isArray(fetched.siteImageItems) && fetched.siteImageItems.length > 0
-              ? fetched.siteImageItems
-              : DEFAULT_SITE_IMAGE_ITEMS,
-          about: {
-            ...DEFAULT_SITE_CONTENT.about,
-            ...(fetched.about || {}),
-          },
-          instructions: {
-            ...DEFAULT_SITE_CONTENT.instructions,
-            ...(fetched.instructions || {}),
-          },
-          footer: {
-            ...DEFAULT_SITE_CONTENT.footer,
-            ...(fetched.footer || {}),
-          },
-          studyMaterials: Array.isArray(fetched.studyMaterials) ? fetched.studyMaterials : [],
-          heroSlides: Array.isArray(fetched.heroSlides) ? fetched.heroSlides : DEFAULT_SITE_CONTENT.heroSlides,
-          awardCriteria: Array.isArray(fetched.awardCriteria) ? fetched.awardCriteria : DEFAULT_SITE_CONTENT.awardCriteria,
-          schedule: Array.isArray(fetched.schedule) ? fetched.schedule : DEFAULT_SITE_CONTENT.schedule,
-          announcements: Array.isArray(fetched.announcements) ? fetched.announcements : DEFAULT_SITE_CONTENT.announcements,
-          exams: Array.isArray(fetched.exams) ? fetched.exams : DEFAULT_SITE_CONTENT.exams,
-        };
+        const merged = mergeFetchedContent(result.content);
+        hasLoadedFromBackendRef.current = true;
         setContent(merged);
         setIsBackendConnected(result.isFromBackend);
         setLastSyncTime(new Date());
         setSyncError(null);
+      } else if (result.success && !result.content) {
+        // Connected to backend, but H:O CMS cell has no saved master JSON yet
+        setIsBackendConnected(false);
+        if (!hasLoadedFromBackendRef.current) {
+          setContent(DEFAULT_SITE_CONTENT);
+        }
       } else {
+        // Transient fetch failure: preserve existing backend-loaded content in state
         setIsBackendConnected(false);
         setSyncError(result.message || 'ไม่สามารถโหลดข้อมูลจากฐานข้อมูลกลาง');
       }
@@ -97,17 +129,15 @@ export function useSiteContent() {
     }
   }, []);
 
-  // Initial load on startup
+  // Initial load on startup & cross-device polling sync
   useEffect(() => {
     isMountedRef.current = true;
     loadContent(false);
 
-    // Periodic polling (every 15–20s) to keep all devices synchronized without redeployment
     const interval = setInterval(() => {
       loadContent(true);
     }, APP_CONFIG.POLLING_INTERVAL_MS);
 
-    // Reload when user switches back to window/tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         loadContent(true);
@@ -124,7 +154,8 @@ export function useSiteContent() {
 
   // Update content in React state only after central database confirmation
   const setSyncedContent = useCallback((newContent: SiteContent) => {
-    setContent(newContent);
+    hasLoadedFromBackendRef.current = true;
+    setContent(mergeFetchedContent(newContent));
     setLastSyncTime(new Date());
     setIsBackendConnected(true);
   }, []);

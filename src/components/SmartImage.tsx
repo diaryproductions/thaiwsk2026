@@ -13,7 +13,7 @@ interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 export const SmartImage: React.FC<SmartImageProps> = ({
   src,
-  alt = 'รูปภาพกิจกรรม THAI WSK 2026',
+  alt = 'รูปภาพกิจกรรม สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย',
   className = '',
   containerClassName = '',
   fallbackType = 'general',

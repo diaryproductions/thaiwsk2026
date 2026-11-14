@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { BookOpen, ExternalLink, AlertCircle, Clock, FileText, CheckCircle2 } from 'lucide-react';
+import { BookOpen, ExternalLink, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
 import { SiteContent } from '../config/defaultContent';
-import { SmartImage } from '../components/SmartImage';
+import { APP_CONFIG } from '../config/constants';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface ExamPageProps {
   content: SiteContent;
+}
+
+function normalizeExamInstruction(text: string): string {
+  const arabic = toArabicNumerals(text);
+  if (/ส่งคำตอบได้(เพียง\s*)?1\s*ครั้ง/.test(arabic)) {
+    return 'สามารถเข้าทำและส่งคำตอบได้ไม่จำกัดจำนวนครั้ง';
+  }
+  return arabic;
 }
 
 export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
@@ -25,7 +34,7 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
           แบบทดสอบวัดความรู้ความสามารถด้านภาษาไทย
         </h1>
         <p className="text-base font-['Sarabun'] text-slate-600 mt-2.5">
-          กิจกรรม &quot;สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย&quot; ประจำปีการศึกษา ๒๕๖๙
+          กิจกรรม &quot;สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย&quot; ประจำปีการศึกษา 2569
         </p>
       </div>
 
@@ -37,16 +46,17 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
             return (
               <button
                 key={lvl.id}
+                type="button"
                 onClick={() => setSelectedLevelId(lvl.id)}
-                className={`flex-1 py-3 px-4 rounded-xl text-sm font-['Prompt'] font-semibold transition-all ${
+                className={`flex-1 py-3 px-4 rounded-xl text-sm font-['Prompt'] font-semibold transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-gradient-to-r from-[#4B267D] to-[#7043A6] text-white shadow-sm'
                     : 'text-slate-600 hover:text-[#4B267D] hover:bg-slate-50'
                 }`}
               >
-                <div>{lvl.levelTitle}</div>
+                <div>{toArabicNumerals(lvl.levelTitle)}</div>
                 <div className={`text-[11px] font-normal mt-0.5 ${isSelected ? 'text-[#D6AF55]' : 'text-slate-600'}`}>
-                  {lvl.grades}
+                  {toArabicNumerals(lvl.grades)}
                 </div>
               </button>
             );
@@ -57,29 +67,18 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
       {/* Main Exam Card */}
       {currentExam && (
         <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Card Top Banner with optional image background */}
+          {/* Card Top Header */}
           <div className="relative bg-gradient-to-r from-[#4B267D] via-[#7043A6] to-[#4B267D] p-6 sm:p-8 text-white overflow-hidden">
-            {content.siteImages?.examBannerUrl && (
-              <div className="absolute inset-0 opacity-15 pointer-events-none mix-blend-overlay">
-                <SmartImage
-                  src={content.siteImages.examBannerUrl}
-                  alt="Exam Banner"
-                  fallbackType="about"
-                  className="w-full h-full object-cover"
-                  containerClassName="w-full h-full"
-                />
-              </div>
-            )}
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-['Prompt'] font-semibold text-[#D6AF55] tracking-wide uppercase">
-                  {currentExam.grades}
+                  {toArabicNumerals(currentExam.grades)}
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-['Prompt'] font-bold mt-1">
-                  {currentExam.levelTitle}
+                  {toArabicNumerals(currentExam.levelTitle)}
                 </h2>
-                <p className="text-sm font-['Sarabun'] text-white/80 mt-1 max-w-xl">
-                  {currentExam.description}
+                <p className="text-sm font-['Sarabun'] text-white/85 mt-1 max-w-xl">
+                  {toArabicNumerals(currentExam.description)}
                 </p>
               </div>
 
@@ -91,27 +90,22 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
               </div>
             </div>
 
-            {/* Metrics Ribbon */}
-            <div className="mt-6 pt-6 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-['Prompt']">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#D6AF55]" />
+            {/* Metrics Ribbon (Time limit removed; unlimited attempts) */}
+            <div className="mt-6 pt-6 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-['Prompt']">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-4 h-4 text-[#D6AF55] shrink-0" />
                 <div>
-                  <div className="text-white/60">เวลาทำแบบทดสอบ</div>
-                  <div className="font-semibold">{currentExam.timeLimitMinutes} นาที</div>
+                  <div className="text-white/65">จำนวนข้อสอบ</div>
+                  <div className="font-semibold">
+                    {toArabicNumerals(currentExam.questionCount)} ข้อ (20 คะแนน)
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#D6AF55]" />
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#D6AF55] shrink-0" />
                 <div>
-                  <div className="text-white/60">จำนวนข้อสอบ</div>
-                  <div className="font-semibold">{currentExam.questionCount} ข้อ (๒๐ คะแนน)</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
-                <CheckCircle2 className="w-4 h-4 text-[#D6AF55]" />
-                <div>
-                  <div className="text-white/60">สิทธิ์การทำข้อสอบ</div>
-                  <div className="font-semibold">ส่งคำตอบได้ ๑ ครั้ง</div>
+                  <div className="text-white/65">สิทธิ์การทำข้อสอบ</div>
+                  <div className="font-semibold">ไม่จำกัดจำนวนครั้ง</div>
                 </div>
               </div>
             </div>
@@ -125,25 +119,25 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
                 <span>คำชี้แจงในการทำแบบทดสอบ</span>
               </h3>
               <ul className="space-y-2.5 font-['Sarabun'] text-sm text-slate-700">
-                {currentExam.instructions.map((inst, idx) => (
+                {(currentExam.instructions || []).map((inst, idx) => (
                   <li key={idx} className="flex items-start gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-[#4B267D]/10 text-[#4B267D] font-['Prompt'] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                       {idx + 1}
                     </span>
-                    <span className="leading-relaxed">{inst}</span>
+                    <span className="leading-relaxed">{normalizeExamInstruction(inst)}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* General Precautions */}
-            <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-[#7043A6]/20 text-xs font-['Sarabun'] text-slate-600 space-y-1">
+            {/* General Precautions & Standardized Contact Notice */}
+            <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-[#7043A6]/20 text-xs font-['Sarabun'] text-slate-600 space-y-1.5">
               <div className="font-semibold font-['Prompt'] text-[#4B267D] mb-1">
                 ข้อแนะนำเพิ่มเติม:
               </div>
               <p>• เมื่อคลิกปุ่มด้านล่าง ระบบจะนำท่านไปยัง Google Forms ของแบบทดสอบ</p>
-              <p>• หากใช้โทรศัพท์มือถือ แนะนำให้ล็อกอินบัญชี Google ในเบราว์เซอร์ให้เรียบร้อยก่อนเริ่มทำ</p>
-              <p>• หากเกิดเหตุขัดข้องทางเทคนิค กรุณาแจ้งครูผู้ประสานงานประจำกลุ่มสาระฯ ภาษาไทย</p>
+              <p>• สามารถเข้าทำและส่งคำตอบได้ไม่จำกัดจำนวนครั้ง</p>
+              <p>• {APP_CONFIG.ADMIN_CONTACT_NOTICE}</p>
             </div>
 
             {/* Primary Action Button */}
@@ -159,7 +153,7 @@ export const ExamPage: React.FC<ExamPageProps> = ({ content }) => {
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-['Prompt'] font-bold text-sm text-white bg-gradient-to-r from-[#4B267D] to-[#7043A6] hover:from-[#30283A] hover:to-[#4B267D] shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 border border-[#D6AF55]/40"
                 >
-                  <span>เริ่มทำแบบทดสอบ {currentExam.levelTitle}</span>
+                  <span>เริ่มทำแบบทดสอบ {toArabicNumerals(currentExam.levelTitle)}</span>
                   <ExternalLink className="w-4 h-4 text-[#D6AF55]" />
                 </a>
               ) : (

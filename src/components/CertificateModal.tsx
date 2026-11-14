@@ -2,6 +2,7 @@ import React from 'react';
 import { X, ExternalLink, Download, AlertCircle, Award, Trophy, Medal, FileBadge } from 'lucide-react';
 import { CertificateSearchResult } from '../services/api';
 import { getMedalTheme } from '../utils/medalTheme';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface CertificateModalProps {
   cert: CertificateSearchResult | null;
@@ -14,7 +15,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ cert, onClos
   const previewUrl = cert.previewUrl;
   const downloadUrl = cert.downloadUrl || cert.certificateUrl;
   const medalTheme = getMedalTheme(cert.medal);
-  const medalText = (cert.medal || '').trim() || '-';
+  const medalText = toArabicNumerals((cert.medal || '').trim()) || '-';
 
   const renderMedalIcon = (className: string) => {
     if (medalTheme.category === 'gold') return <Trophy className={className} />;
@@ -38,7 +39,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ cert, onClos
                 เกียรติบัตรอิเล็กทรอนิกส์
               </div>
               <h3 className="font-['Prompt'] font-bold text-lg">
-                {cert.fullName}
+                {toArabicNumerals(cert.fullName)}
               </h3>
             </div>
           </div>
@@ -99,7 +100,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ cert, onClos
         {/* Modal Footer Actions */}
         <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs font-['Sarabun'] text-slate-500">
-            ระดับชั้น: {cert.grade || '-'} · ห้อง: {cert.room || '-'} · รางวัล: {medalText}
+            ระดับชั้น: {toArabicNumerals(cert.grade) || '-'} · ห้อง: {toArabicNumerals(cert.room) || '-'} · รางวัล: {medalText}
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto font-['Prompt'] text-xs sm:text-sm">

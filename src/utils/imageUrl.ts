@@ -1,5 +1,5 @@
 /**
- * URL resolution and fallback utility for images in THAI WSK 2026
+ * URL resolution and fallback utility for images in สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย
  * Resolves paths safely for both Vite local dev and GitHub Pages production (/thaiwsk2026/)
  */
 

@@ -1,17 +1,14 @@
 import React from 'react';
 import { Bell, Pin, User, Calendar } from 'lucide-react';
-import { AnnouncementItem, ManagedSiteImage } from '../config/defaultContent';
-import { SmartImage } from './SmartImage';
-import { DynamicSectionImages } from './DynamicSectionImages';
+import { AnnouncementItem } from '../config/defaultContent';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface AnnouncementsSectionProps {
   announcements: AnnouncementItem[];
-  managedImages?: ManagedSiteImage[];
 }
 
 export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
   announcements,
-  managedImages,
 }) => {
   const activeItems = (announcements || [])
     .filter((a) => a.isActive)
@@ -55,12 +52,12 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
                 <div className="flex flex-wrap items-center gap-2 text-xs font-['Prompt'] text-slate-500">
                   <span className="flex items-center gap-1 text-[#7043A6]">
                     <Calendar className="w-3.5 h-3.5 text-[#D6AF55]" />
-                    <span>{item.date}</span>
+                    <span>{toArabicNumerals(item.date)}</span>
                   </span>
                   <span>·</span>
                   <span className="flex items-center gap-1 text-slate-600">
                     <User className="w-3.5 h-3.5" />
-                    <span>{item.author}</span>
+                    <span>{toArabicNumerals(item.author)}</span>
                   </span>
                 </div>
                 {item.isPinned && (
@@ -71,34 +68,16 @@ export const AnnouncementsSection: React.FC<AnnouncementsSectionProps> = ({
                 )}
               </div>
 
-              {item.imageUrl && (
-                <div className="mb-3 rounded-xl overflow-hidden max-h-48 border border-slate-200">
-                  <SmartImage
-                    src={item.imageUrl}
-                    alt={item.title}
-                    className="w-full h-48 object-cover"
-                    containerClassName="w-full h-48"
-                  />
-                </div>
-              )}
-
               <h3 className="font-['Prompt'] font-bold text-base sm:text-lg text-[#30283A] mb-2 leading-snug">
-                {item.title}
+                {toArabicNumerals(item.title)}
               </h3>
 
               <p className="font-['Sarabun'] text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                {item.content}
+                {toArabicNumerals(item.content)}
               </p>
             </div>
           ))}
         </div>
-
-        {/* Extra Admin-placed images in 'announcement' section */}
-        <DynamicSectionImages
-          items={managedImages}
-          section="announcement"
-          className="mt-8"
-        />
       </div>
     </section>
   );

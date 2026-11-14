@@ -11,7 +11,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onSelectTab }) => {
     {
       tab: 'exam' as NavTab,
       title: 'ทำแบบทดสอบออนไลน์',
-      subtitle: 'ระดับ ม.ต้น (ม.๑–๓) และ ม.ปลาย (ม.๔–๖)',
+      subtitle: 'ระดับ ม.ต้น (ม.1–3) และ ม.ปลาย (ม.4–6)',
       description: 'เข้าสู่ข้อสอบออนไลน์ผ่านระบบ Google Forms เพื่อประเมินสมรรถนะความรู้ภาษาไทย',
       icon: BookOpen,
       iconColor: 'text-[#4B267D]',

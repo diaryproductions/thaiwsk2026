@@ -13,6 +13,7 @@ import {
 import { StudyMaterial } from '../config/defaultContent';
 import { extractYouTubeId } from '../utils/imageUrl';
 import { ThaiOrnament } from './ThaiOrnament';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface StudyResourcesSectionProps {
   materials: StudyMaterial[];
@@ -47,14 +48,14 @@ export const StudyResourcesSection: React.FC<StudyResourcesSectionProps> = ({ ma
       id: 'junior' as const,
       title: 'ศึกษาและทบทวนความรู้ด้านภาษาไทย ระดับมัธยมศึกษาตอนต้น (ม.1–ม.3)',
       shortLevel: 'ระดับมัธยมศึกษาตอนต้น (ม.1–ม.3)',
-      subtitle: 'หลักภาษาไทย การอ่านจับใจความ วรรณคดีวิจักษ์ และวรรณคดีลำนำ ชั้น ม.๑ – ม.๓',
+      subtitle: 'หลักภาษาไทย การอ่านจับใจความ วรรณคดีวิจักษ์ และวรรณคดีลำนำ ชั้น ม.1 – ม.3',
       items: juniorItems,
     },
     {
       id: 'senior' as const,
       title: 'ศึกษาและทบทวนความรู้ด้านภาษาไทย ระดับมัธยมศึกษาตอนปลาย (ม.4–ม.6)',
       shortLevel: 'ระดับมัธยมศึกษาตอนปลาย (ม.4–ม.6)',
-      subtitle: 'หลักภาษาขั้นสูง การวิเคราะห์วรรณคดีและวรรณกรรม ทัศนะเชิงวรรณศิลป์ ชั้น ม.๔ – ม.๖',
+      subtitle: 'หลักภาษาขั้นสูง การวิเคราะห์วรรณคดีและวรรณกรรม ทัศนะเชิงวรรณศิลป์ ชั้น ม.4 – ม.6',
       items: seniorItems,
     },
   ];
@@ -282,12 +283,12 @@ export const StudyResourcesSection: React.FC<StudyResourcesSectionProps> = ({ ma
                         </div>
 
                         <h4 className="font-['Prompt'] font-bold text-base text-[#30283A] leading-snug">
-                          {item.title}
+                          {toArabicNumerals(item.title)}
                         </h4>
 
                         {item.description && (
                           <p className="text-sm font-['Sarabun'] text-slate-600 leading-relaxed line-clamp-3">
-                            {item.description}
+                            {toArabicNumerals(item.description)}
                           </p>
                         )}
                       </div>

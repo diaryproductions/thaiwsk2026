@@ -3,6 +3,7 @@ import { Search, CheckCircle, XCircle, AlertTriangle, HelpCircle, User, Award, S
 import { searchScore, ScoreSearchResult } from '../services/api';
 import { SiteContent } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface ScorePageProps {
   content: SiteContent;
@@ -29,7 +30,7 @@ export const ScorePage: React.FC<ScorePageProps> = ({
     if (!query) return;
 
     if (query.length < 2) {
-      setErrorMessage('กรุณาระบุชื่อค้นหาอย่างน้อย ๒ ตัวอักษร');
+      setErrorMessage('กรุณาระบุชื่อค้นหาอย่างน้อย 2 ตัวอักษร');
       return;
     }
 
@@ -133,12 +134,12 @@ export const ScorePage: React.FC<ScorePageProps> = ({
                   className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-xs sm:text-sm font-['Prompt'] text-slate-700 bg-white focus:border-[#7043A6] outline-none"
                 >
                   <option value="">ทุกระดับชั้น</option>
-                  <option value="ม.1">มัธยมศึกษาปีที่ ๑ (ม.๑)</option>
-                  <option value="ม.2">มัธยมศึกษาปีที่ ๒ (ม.๒)</option>
-                  <option value="ม.3">มัธยมศึกษาปีที่ ๓ (ม.๓)</option>
-                  <option value="ม.4">มัธยมศึกษาปีที่ ๔ (ม.๔)</option>
-                  <option value="ม.5">มัธยมศึกษาปีที่ ๕ (ม.๕)</option>
-                  <option value="ม.6">มัธยมศึกษาปีที่ ๖ (ม.๖)</option>
+                  <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
+                  <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
+                  <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
+                  <option value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</option>
+                  <option value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</option>
+                  <option value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</option>
                 </select>
               </div>
 
@@ -234,7 +235,7 @@ export const ScorePage: React.FC<ScorePageProps> = ({
                       บัตรผลคะแนนรายบุคคล
                     </div>
                     <h3 className="text-xl sm:text-2xl font-['Prompt'] font-bold">
-                      {item.fullName}
+                      {toArabicNumerals(item.fullName)}
                     </h3>
                   </div>
                 </div>
@@ -249,7 +250,7 @@ export const ScorePage: React.FC<ScorePageProps> = ({
                     }`}
                   >
                     {isPassed ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                    <span>ผลการประเมิน: {item.evaluation}</span>
+                    <span>ผลการประเมิน: {toArabicNumerals(item.evaluation)}</span>
                   </span>
                 </div>
               </div>
@@ -260,28 +261,28 @@ export const ScorePage: React.FC<ScorePageProps> = ({
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
                     <div className="text-xs text-slate-500">เลขที่ (ลำดับ)</div>
                     <div className="text-lg font-bold text-[#30283A] mt-1 tabular-nums">
-                      {item.number || '-'}
+                      {toArabicNumerals(item.number) || '-'}
                     </div>
                   </div>
 
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
                     <div className="text-xs text-slate-500">ระดับชั้น</div>
                     <div className="text-lg font-bold text-[#4B267D] mt-1">
-                      {item.grade || '-'}
+                      {toArabicNumerals(item.grade) || '-'}
                     </div>
                   </div>
 
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-100">
                     <div className="text-xs text-slate-500">ห้องเรียน</div>
                     <div className="text-lg font-bold text-[#4B267D] mt-1 tabular-nums">
-                      {item.room ? `ห้อง ${item.room}` : '-'}
+                      {item.room ? `ห้อง ${toArabicNumerals(item.room)}` : '-'}
                     </div>
                   </div>
 
                   <div className="bg-gradient-to-b from-[#FAF8FD] to-purple-50/50 p-3.5 rounded-xl border border-[#7043A6]/20">
                     <div className="text-xs text-[#7043A6] font-semibold">คะแนนที่ได้</div>
                     <div className="text-2xl font-bold text-[#4B267D] mt-0.5 tabular-nums">
-                      {item.score}
+                      {toArabicNumerals(item.score)}
                     </div>
                     {percentage !== null && (
                       <div className="text-[11px] text-slate-500 font-normal">
@@ -313,17 +314,17 @@ export const ScorePage: React.FC<ScorePageProps> = ({
             <span>คำแนะนำและข้อกำหนดการตรวจสอบคะแนน</span>
           </h4>
           <ul className="space-y-1.5 text-xs text-slate-600">
-            {content.instructions.scoreCheck.map((inst, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-[#D6AF55] font-bold">•</span>
-                <span>{inst}</span>
-              </li>
-            ))}
-            <li className="flex items-start gap-2">
+            {content.instructions.scoreCheck
+              .filter((inst) => !inst.includes('ครูแบงค์'))
+              .map((inst, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-[#D6AF55] font-bold">•</span>
+                  <span>{toArabicNumerals(inst)}</span>
+                </li>
+              ))}
+            <li className="flex items-start gap-2 font-medium text-[#4B267D]">
               <span className="text-[#D6AF55] font-bold">•</span>
-              <span>
-                หากพบปัญหาคะแนนไม่ถูกต้องหรือสะกดชื่อผิดพลาด กรุณาติดต่อคุณครูผู้ดูแลระบบที่ห้องพักครูกลุ่มสาระการเรียนรู้ภาษาไทย
-              </span>
+              <span>{APP_CONFIG.ADMIN_CONTACT_NOTICE}</span>
             </li>
           </ul>
         </div>

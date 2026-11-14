@@ -29,6 +29,7 @@ import {
 } from '../utils/pdfMerger';
 import { CertificateModal } from '../components/CertificateModal';
 import { APP_CONFIG } from '../config/constants';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 export const AdminCertificateManager: React.FC = () => {
   const [items, setItems] = useState<AdminCertificateItem[]>([]);
@@ -408,7 +409,7 @@ export const AdminCertificateManager: React.FC = () => {
             <option value="">ทุกระดับชั้น</option>
             {availableGrades.map((g) => (
               <option key={g} value={g}>
-                {g}
+                {toArabicNumerals(g)}
               </option>
             ))}
           </select>
@@ -426,7 +427,7 @@ export const AdminCertificateManager: React.FC = () => {
             <option value="">ทุกห้องเรียน</option>
             {availableRooms.map((r) => (
               <option key={r} value={r}>
-                ห้อง {r}
+                ห้อง {toArabicNumerals(r)}
               </option>
             ))}
           </select>
@@ -567,10 +568,10 @@ export const AdminCertificateManager: React.FC = () => {
                         </button>
                       </td>
                       <td className="py-3 px-3 font-['Prompt'] font-semibold text-slate-700 tabular-nums">
-                        {item.number || '-'}
+                        {toArabicNumerals(item.number) || '-'}
                       </td>
                       <td className="py-3 px-3 font-['Prompt'] font-semibold text-[#30283A]">
-                        <div>{item.fullName || '-'}</div>
+                        <div>{toArabicNumerals(item.fullName) || '-'}</div>
                         {!hasUrl && (
                           <span className="text-[10px] text-red-600 font-normal">
                             * ไม่มีลิงก์ไฟล์ในคอลัมน์ F
@@ -578,17 +579,17 @@ export const AdminCertificateManager: React.FC = () => {
                         )}
                       </td>
                       <td className="py-3 px-3 font-['Prompt'] text-slate-700">
-                        {item.grade || '-'}
+                        {toArabicNumerals(item.grade) || '-'}
                       </td>
                       <td className="py-3 px-3 font-['Prompt'] text-slate-700 tabular-nums">
-                        {item.room || '-'}
+                        {toArabicNumerals(item.room) || '-'}
                       </td>
                       <td className="py-3 px-3">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg border text-[11px] font-['Prompt'] font-bold ${theme.badgeBg}`}
                         >
                           <Award className="w-3 h-3" />
-                          <span>{item.medal || '-'}</span>
+                          <span>{toArabicNumerals(item.medal) || '-'}</span>
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -750,10 +751,10 @@ export const AdminCertificateManager: React.FC = () => {
                           </span>
                           <div>
                             <span className="font-semibold text-[#30283A]">
-                              {it.fullName}
+                              {toArabicNumerals(it.fullName)}
                             </span>
                             <span className="text-slate-500 font-['Sarabun'] ml-2">
-                              ({it.grade || '-'} {it.room ? `ห้อง ${it.room}` : ''})
+                              ({toArabicNumerals(it.grade) || '-'} {it.room ? `ห้อง ${toArabicNumerals(it.room)}` : ''})
                             </span>
                           </div>
                         </div>
@@ -762,7 +763,7 @@ export const AdminCertificateManager: React.FC = () => {
                           <span
                             className={`px-2 py-0.5 rounded-md border text-[11px] font-bold ${theme.badgeBg}`}
                           >
-                            {it.medal || '-'}
+                            {toArabicNumerals(it.medal) || '-'}
                           </span>
                           {okInfo && (
                             <span className="inline-flex items-center gap-1 text-emerald-700 text-[11px]">

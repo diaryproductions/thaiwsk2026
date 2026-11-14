@@ -1,13 +1,16 @@
 /**
- * THAI WSK 2026 — Configuration and Constants
+ * สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย — Configuration and Constants
  * กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"
  */
 
 export const APP_CONFIG = {
-  APP_NAME: 'THAI WSK 2026',
+  APP_NAME: 'สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย',
   PROJECT_NAME: 'โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย',
   ACTIVITY_NAME: 'สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย',
   ORGANIZATION: 'กลุ่มสาระการเรียนรู้ภาษาไทย โรงเรียนกระทุ่มแบน "วิเศษสมุทคุณ"',
+  LOGO_URL: 'https://img1.pic.in.th/images/logo-thaiwsk.png',
+  ADMIN_CONTACT_NOTICE:
+    'หากพบปัญหาคะแนนไม่ถูกต้องหรือสะกดชื่อผิดพลาด ให้ติดต่อ ครูแบงค์ ณัฐวุฒิ ธนาศิริธนวัชร์ ที่ห้องกลุ่มบริหารทั่วไป อาคาร 2 หรือติดต่อทาง Facebook: Nattawut BK',
   DEFAULT_ADMIN_USER: 'admin_wsk',
   
   // Shared Configuration File (loaded at runtime by every device without redeployment)

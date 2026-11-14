@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Calendar } from 'lucide-react';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface CountdownTimerProps {
   targetDateIso: string;
@@ -68,7 +69,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
               <span>กำหนดการสำคัญ</span>
             </div>
             <h3 className="text-base sm:text-lg font-['Prompt'] font-bold text-[#30283A]">
-              {label}
+              {toArabicNumerals(label)}
             </h3>
           </div>
         </div>

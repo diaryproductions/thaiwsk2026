@@ -1,15 +1,14 @@
 import React from 'react';
 import { Calendar, Clock, MapPin } from 'lucide-react';
-import { ScheduleItem, ManagedSiteImage } from '../config/defaultContent';
+import { ScheduleItem } from '../config/defaultContent';
 import { ThaiOrnament } from './ThaiOrnament';
-import { DynamicSectionImages } from './DynamicSectionImages';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface ScheduleSectionProps {
   schedule: ScheduleItem[];
-  managedImages?: ManagedSiteImage[];
 }
 
-export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, managedImages }) => {
+export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule }) => {
   const sorted = [...(schedule || [])].sort((a, b) => a.sortOrder - b.sortOrder);
 
   if (sorted.length === 0) return null;
@@ -51,29 +50,29 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, mana
                         {index + 1}
                       </span>
                       <h3 className="text-base sm:text-lg font-['Prompt'] font-bold text-[#30283A]">
-                        {item.topic}
+                        {toArabicNumerals(item.topic)}
                       </h3>
                     </div>
 
                     <p className="text-xs sm:text-sm font-['Sarabun'] text-slate-600 pl-9">
-                      {item.description}
+                      {toArabicNumerals(item.description)}
                     </p>
                   </div>
 
                   <div className="sm:text-right shrink-0 pl-9 sm:pl-0 space-y-1">
                     <div className="inline-flex items-center gap-1.5 text-xs font-['Prompt'] font-semibold text-[#4B267D] bg-[#F4E4B5]/40 px-2.5 py-1 rounded-md border border-[#D6AF55]/50">
                       <Calendar className="w-3.5 h-3.5 text-[#8E661D]" />
-                      <span>{item.date}</span>
+                      <span>{toArabicNumerals(item.date)}</span>
                     </div>
 
                     <div className="flex items-center sm:justify-end gap-3 text-xs text-slate-500 font-['Sarabun'] mt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-[#7043A6]" />
-                        <span>{item.time}</span>
+                        <span>{toArabicNumerals(item.time)}</span>
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#D6AF55]" />
-                        <span>{item.location}</span>
+                        <span>{toArabicNumerals(item.location)}</span>
                       </span>
                     </div>
                   </div>
@@ -82,13 +81,6 @@ export const ScheduleSection: React.FC<ScheduleSectionProps> = ({ schedule, mana
             );
           })}
         </div>
-
-        {/* Extra Admin-placed images in 'activity' section */}
-        <DynamicSectionImages
-          items={managedImages}
-          section="activity"
-          className="max-w-4xl mx-auto mt-8"
-        />
       </div>
     </section>
   );

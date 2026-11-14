@@ -8,7 +8,6 @@ import { AwardCriteria } from '../components/AwardCriteria';
 import { ScheduleSection } from '../components/ScheduleSection';
 import { AnnouncementsSection } from '../components/AnnouncementsSection';
 import { RevealSection } from '../components/RevealSection';
-import { DynamicSectionImages } from '../components/DynamicSectionImages';
 import { SiteContent } from '../config/defaultContent';
 import { NavTab } from '../components/Navbar';
 
@@ -18,10 +17,6 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ content, onSelectTab }) => {
-  const otherImages = (content.siteImageItems || []).filter(
-    (img) => img.section === 'other' && img.isVisible !== false && img.url?.trim()
-  );
-
   return (
     <div className="space-y-0">
       {/* 1. Centered Academic Hero Section */}
@@ -46,12 +41,9 @@ export const HomePage: React.FC<HomePageProps> = ({ content, onSelectTab }) => {
         <StudyResourcesSection materials={content.studyMaterials || []} />
       </RevealSection>
 
-      {/* 5. About the Academic Project */}
+      {/* 5. About the Academic Project (Centered Content Layout) */}
       <RevealSection>
-        <AboutSection
-          about={content.about}
-          managedImages={content.siteImageItems}
-        />
+        <AboutSection about={content.about} />
       </RevealSection>
 
       {/* 6. Award Criteria */}
@@ -59,35 +51,15 @@ export const HomePage: React.FC<HomePageProps> = ({ content, onSelectTab }) => {
         <AwardCriteria criteria={content.awardCriteria} />
       </RevealSection>
 
-      {/* 7. Important Schedule & Activity Visuals */}
+      {/* 7. Important Schedule */}
       <RevealSection>
-        <ScheduleSection
-          schedule={content.schedule}
-          managedImages={content.siteImageItems}
-        />
+        <ScheduleSection schedule={content.schedule} />
       </RevealSection>
 
       {/* 8. Announcements */}
       <RevealSection>
-        <AnnouncementsSection
-          announcements={content.announcements}
-          managedImages={content.siteImageItems}
-        />
+        <AnnouncementsSection announcements={content.announcements} />
       </RevealSection>
-
-      {/* 9. Custom Admin-placed Images ('other' section) */}
-      {otherImages.length > 0 && (
-        <RevealSection>
-          <section className="py-10 px-4 bg-[#FAF8FD] border-t border-[#D6AF55]/25">
-            <div className="max-w-7xl mx-auto">
-              <DynamicSectionImages
-                items={content.siteImageItems}
-                section="other"
-              />
-            </div>
-          </section>
-        </RevealSection>
-      )}
     </div>
   );
 };

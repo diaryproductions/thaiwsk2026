@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Save,
   LogOut,
@@ -7,7 +7,6 @@ import {
   Trash2,
   Database,
   Globe,
-  Image,
   Award,
   Calendar,
   Bell,
@@ -19,7 +18,6 @@ import {
   AlertTriangle,
   HelpCircle,
   Link,
-  Shield,
   Eye,
   Copy,
   Download,
@@ -27,9 +25,6 @@ import {
   Laptop,
   Check,
   ExternalLink,
-  Camera,
-  FolderOpen,
-  Layers,
   GraduationCap,
   Youtube,
   ArrowUp,
@@ -40,28 +35,20 @@ import {
 } from 'lucide-react';
 import {
   SiteContent,
-  HeroSlide,
   AwardCriterion,
   ScheduleItem,
   AnnouncementItem,
   StudyMaterial,
-  DEFAULT_SITE_CONTENT,
-  DEFAULT_SITE_IMAGE_ITEMS,
-  SiteImages,
-  ManagedSiteImage,
 } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
-import { SmartImage } from '../components/SmartImage';
-import { isViewerPageUrl, extractYouTubeId } from '../utils/imageUrl';
+import { extractYouTubeId } from '../utils/imageUrl';
 import { AdminCertificateManager } from './AdminCertificateManager';
-import { AdminImageLayoutManager } from './AdminImageLayoutManager';
 import {
   saveSiteContent,
   getApiBaseUrl,
   setApiBaseUrl,
   checkBackendHealth,
   getAdminToken,
-  setAdminToken,
   getConfigProvenance,
   inspectGasUrl,
   generateAppConfigJson,
@@ -81,8 +68,6 @@ type AdminSection =
   | 'meta'
   | 'certificates'
   | 'study'
-  | 'media'
-  | 'slides'
   | 'about'
   | 'awards'
   | 'schedule'
@@ -96,29 +81,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   content,
   onUpdateContentLocally,
   onLogout,
-  isBackendConnected,
   refreshContent,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminSection>('meta');
   const [studyLevelFilter, setStudyLevelFilter] = useState<'all' | 'junior' | 'senior'>('all');
   const [previewStudyId, setPreviewStudyId] = useState<string | null>(null);
-  const [copiedAssetUrl, setCopiedAssetUrl] = useState<string | null>(null);
-  const [formData, setFormData] = useState<SiteContent>(() => {
-    const copy: SiteContent = JSON.parse(JSON.stringify(content));
-    copy.siteImages = {
-      ...DEFAULT_SITE_CONTENT.siteImages,
-      ...(copy.siteImages || {}),
-    };
-    copy.siteImageItems =
-      Array.isArray(copy.siteImageItems) && copy.siteImageItems.length > 0
-        ? copy.siteImageItems
-        : JSON.parse(JSON.stringify(DEFAULT_SITE_IMAGE_ITEMS));
-    copy.studyMaterials = Array.isArray(copy.studyMaterials) ? copy.studyMaterials : [];
-    if (!copy.about.teacherImageUrl) {
-      copy.about.teacherImageUrl = 'images/thai_teacher_team_2026.png';
+  const [formData, setFormData] = useState<SiteContent>(() => ({
+    ...JSON.parse(JSON.stringify(content)),
+    studyMaterials: Array.isArray(content.studyMaterials) ? content.studyMaterials : [],
+  }));
+  const isDirtyRef = useRef(false);
+
+  const updateFormData = (next: SiteContent) => {
+    isDirtyRef.current = true;
+    setFormData(next);
+  };
+
+  // Sync incoming central database updates automatically when admin has no unsaved edits
+  useEffect(() => {
+    if (!isDirtyRef.current) {
+      setFormData({
+        ...JSON.parse(JSON.stringify(content)),
+        studyMaterials: Array.isArray(content.studyMaterials) ? content.studyMaterials : [],
+      });
     }
-    return copy;
-  });
+  }, [content]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -235,23 +223,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       // Persist directly to Google Sheets columns H:O via Google Apps Script (Code.gs)
       const res = await saveSiteContent(updatedData);
       if (res.success && res.verified) {
-        // Only update display once confirmed and read back from Google Sheets
         const verifiedData: SiteContent = {
-          ...DEFAULT_SITE_CONTENT,
           ...(res.verifiedContent || updatedData),
-          siteImages: {
-            ...DEFAULT_SITE_CONTENT.siteImages,
-            ...((res.verifiedContent || updatedData).siteImages || {}),
-          },
-          siteImageItems:
-            Array.isArray((res.verifiedContent || updatedData).siteImageItems) &&
-            (res.verifiedContent || updatedData).siteImageItems!.length > 0
-              ? (res.verifiedContent || updatedData).siteImageItems
-              : DEFAULT_SITE_IMAGE_ITEMS,
           studyMaterials: Array.isArray((res.verifiedContent || updatedData).studyMaterials)
             ? (res.verifiedContent || updatedData).studyMaterials
             : [],
         };
+        isDirtyRef.current = false;
         setFormData(verifiedData);
         onUpdateContentLocally(verifiedData);
         setSaveStatus({
@@ -279,47 +257,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleAddSlide = () => {
-    const newSlide: HeroSlide = {
-      id: `slide-${Date.now()}`,
-      imageUrl: '/src/assets/images/hero_thai_wsk_banner_1794141245856.jpg',
-      title: 'กิจกรรมส่งเสริมภาษาไทย',
-      subtitle: 'คำอธิบายภาพสไลด์ใหม่',
-      badge: 'กิจกรรมวิชาการ',
-      sortOrder: (formData.heroSlides?.length || 0) + 1,
-    };
-    setFormData({
-      ...formData,
-      heroSlides: [...(formData.heroSlides || []), newSlide],
-    });
-  };
-
-  const handleDeleteSlide = (id: string) => {
-    setFormData({
-      ...formData,
-      heroSlides: (formData.heroSlides || []).filter((s) => s.id !== id),
-    });
-  };
-
   const handleAddAward = () => {
     const newAward: AwardCriterion = {
       id: `crit-${Date.now()}`,
       title: 'รางวัลเกียรติยศใหม่',
-      rangeText: 'คะแนน ๑๐ – ๑๒ คะแนน',
-      percentageText: 'ร้อยละ ๕๐ – ๖๐',
+      rangeText: 'คะแนน 10 – 12 คะแนน',
+      percentageText: 'ร้อยละ 50 – 60',
       description: 'คำอธิบายเกณฑ์รางวัลใหม่',
       colorGrade: 'honor',
       sortOrder: (formData.awardCriteria?.length || 0) + 1,
       isActive: true,
     };
-    setFormData({
+    updateFormData({
       ...formData,
       awardCriteria: [...(formData.awardCriteria || []), newAward],
     });
   };
 
   const handleDeleteAward = (id: string) => {
-    setFormData({
+    updateFormData({
       ...formData,
       awardCriteria: (formData.awardCriteria || []).filter((a) => a.id !== id),
     });
@@ -329,21 +285,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const newItem: ScheduleItem = {
       id: `sched-${Date.now()}`,
       topic: 'กำหนดการใหม่',
-      date: '๑ มกราคม ๒๕๖๙',
-      time: '๐๙.๐๐ น.',
+      date: '1 มกราคม 2569',
+      time: '09.00 น.',
       location: 'ออนไลน์',
       description: 'รายละเอียดกิจกรรม',
       sortOrder: (formData.schedule?.length || 0) + 1,
       status: 'upcoming',
     };
-    setFormData({
+    updateFormData({
       ...formData,
       schedule: [...(formData.schedule || []), newItem],
     });
   };
 
   const handleDeleteSchedule = (id: string) => {
-    setFormData({
+    updateFormData({
       ...formData,
       schedule: (formData.schedule || []).filter((s) => s.id !== id),
     });
@@ -353,21 +309,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const newAnn: AnnouncementItem = {
       id: `ann-${Date.now()}`,
       title: 'หัวข้อประกาศใหม่',
-      date: '๑ มกราคม ๒๕๖๙',
+      date: '1 มกราคม 2569',
       author: 'คณะกรรมการ',
       content: 'เนื้อหารายละเอียดของประกาศ...',
       isPinned: false,
       isActive: true,
       sortOrder: (formData.announcements?.length || 0) + 1,
     };
-    setFormData({
+    updateFormData({
       ...formData,
       announcements: [...(formData.announcements || []), newAnn],
     });
   };
 
   const handleDeleteAnnouncement = (id: string) => {
-    setFormData({
+    updateFormData({
       ...formData,
       announcements: (formData.announcements || []).filter((a) => a.id !== id),
     });
@@ -385,7 +341,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       sortOrder: existing.length + 1,
       isActive: true,
     };
-    setFormData({
+    updateFormData({
       ...formData,
       studyMaterials: [...existing, newMaterial],
     });
@@ -395,7 +351,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const remaining = (formData.studyMaterials || [])
       .filter((m) => m.id !== id)
       .map((m, i) => ({ ...m, sortOrder: i + 1 }));
-    setFormData({
+    updateFormData({
       ...formData,
       studyMaterials: remaining,
     });
@@ -414,7 +370,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     sorted[index] = sorted[swapIdx];
     sorted[swapIdx] = temp;
     const reindexed = sorted.map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
-    setFormData({
+    updateFormData({
       ...formData,
       studyMaterials: reindexed,
     });
@@ -428,7 +384,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <h1 className="text-xl sm:text-2xl font-['Prompt'] font-bold text-[#4B267D]">
-              แผงควบคุมระบบจัดการแอดมิน (Admin CMS)
+              ระบบจัดการข้อมูล — สืบศิลป์ถิ่นอักษร สืบสุนทรภาษาไทย
             </h1>
           </div>
           <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
@@ -441,7 +397,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <button
             onClick={handleSaveToSheet}
             disabled={isSaving}
-            className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-[#D6AF55] to-[#C99C38] text-[#30283A] hover:brightness-105 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-[#D6AF55] to-[#C99C38] text-[#30283A] hover:brightness-105 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? (
               <RefreshCw className="w-4 h-4 animate-spin text-[#4B267D]" />
@@ -453,7 +409,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={onLogout}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>ออกจากระบบ</span>
@@ -486,14 +442,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Main Admin Grid (Sidebar + Content) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Navigation Sidebar */}
+        {/* Navigation Sidebar (Hero & Media image management removed permanently) */}
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-2 space-y-1 font-['Prompt'] text-xs sm:text-sm shadow-xs">
           {[
             { id: 'meta' as AdminSection, label: 'ข้อมูลทั่วไป & Countdown', icon: Globe },
             { id: 'certificates' as AdminSection, label: 'จัดการและพิมพ์เกียรติบัตร', icon: Printer },
             { id: 'study' as AdminSection, label: 'จัดการสื่อศึกษาและทบทวนความรู้', icon: GraduationCap },
-            { id: 'media' as AdminSection, label: 'จัดการรูปภาพทุกจุด (Media)', icon: Camera },
-            { id: 'slides' as AdminSection, label: 'ส่วนหัวเว็บไซต์ (Hero Banner)', icon: Image },
             { id: 'about' as AdminSection, label: 'เกี่ยวกับโครงการวิชาการ', icon: FileText },
             { id: 'awards' as AdminSection, label: 'เกณฑ์รางวัลและเกียรติบัตร', icon: Award },
             { id: 'schedule' as AdminSection, label: 'กำหนดการสำคัญ', icon: Calendar },
@@ -509,7 +463,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full text-left px-3.5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2.5 ${
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2.5 cursor-pointer ${
                   isActive
                     ? 'bg-[#4B267D] text-white shadow-xs'
                     : 'text-slate-700 hover:bg-[#FAF8FD] hover:text-[#4B267D]'
@@ -524,31 +478,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Content Area */}
         <div className="lg:col-span-9 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
-          {/* TAB 1: META */}
+          {/* TAB 1: META & COUNTDOWN */}
           {activeTab === 'meta' && (
             <div className="space-y-6">
-              <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D] border-b pb-3">
-                ตั้งค่าข้อมูลทั่วไปและเวลานับถอยหลัง
-              </h3>
+              <div className="border-b pb-3">
+                <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
+                  ตั้งค่าปีการศึกษาและเวลานับถอยหลัง (Countdown)
+                </h3>
+                <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
+                  ชื่อเว็บไซต์ โลโก้ และส่วนหัวเว็บไซต์ (Hero Section) ถูกกำหนดค่าถาวรในระบบแล้ว
+                </p>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-['Prompt'] font-semibold text-slate-700 mb-1">
-                    ชื่อเว็บไซต์ / รหัสโครงการ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.siteMeta.title}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        siteMeta: { ...formData.siteMeta, title: e.target.value },
-                      })
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-['Prompt']"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-xs font-['Prompt'] font-semibold text-slate-700 mb-1">
                     ปีการศึกษา
@@ -557,26 +499,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.siteMeta.academicYear}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         siteMeta: { ...formData.siteMeta, academicYear: e.target.value },
-                      })
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-['Prompt']"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-['Prompt'] font-semibold text-slate-700 mb-1">
-                    ชื่อกิจกรรม / คำโปรยหลัก
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.siteMeta.subtitle}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        siteMeta: { ...formData.siteMeta, subtitle: e.target.value },
                       })
                     }
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-['Prompt']"
@@ -591,7 +516,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.siteMeta.countdownLabel}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         siteMeta: { ...formData.siteMeta, countdownLabel: e.target.value },
                       })
@@ -600,7 +525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-['Prompt'] font-semibold text-slate-700 mb-1">
                     วันและเวลาเป้าหมาย (ISO Format)
                   </label>
@@ -608,7 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.siteMeta.countdownTarget}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         siteMeta: { ...formData.siteMeta, countdownTarget: e.target.value },
                       })
@@ -713,7 +638,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         const updated = [...(formData.studyMaterials || [])];
                         if (realIndex !== -1) {
                           updated[realIndex] = { ...updated[realIndex], ...patch };
-                          setFormData({ ...formData, studyMaterials: updated });
+                          updateFormData({ ...formData, studyMaterials: updated });
                         }
                       };
 
@@ -963,715 +888,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             );
           })()}
 
-          {/* TAB: MEDIA & ALL IMAGES */}
-          {activeTab === 'media' && (
-            <div className="space-y-8">
-              <div className="border-b pb-4">
-                <div className="flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-[#D6AF55]" />
-                  <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
-                    ศูนย์จัดการรูปภาพและสื่อทั้งหมดในเว็บไซต์ (Media Center)
-                  </h3>
-                </div>
-                <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
-                  ปรับเปลี่ยนและจัดการรูปภาพทุกตำแหน่งบนเว็บไซต์: โลโก้, แบนเนอร์, ภาพพื้นหลัง, ภาพสไลด์, ภาพคณะครู และภาพประกอบทุกหน้า
-                  โดยข้อมูลจะถูกบันทึกถาวรลง Google Sheets และแสดงผลตรงกันทุกอุปกรณ์ทันที
-                </p>
-              </div>
-
-              {/* SECTION A: PRESET & LOCAL ASSETS GALLERY */}
-              <div className="bg-[#FAF8FD] rounded-2xl p-5 border border-[#D6AF55]/40 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FolderOpen className="w-4 h-4 text-[#7043A6]" />
-                    <h4 className="font-['Prompt'] font-bold text-sm text-[#4B267D]">
-                      คลังไฟล์ภาพในระบบ (Preset System Assets)
-                    </h4>
-                  </div>
-                  <span className="text-[11px] font-['Sarabun'] text-slate-500">
-                    * รูปภาพที่รวมอยู่ในโฟลเดอร์ <code>public/images/</code> พร้อมเรียกใช้ทุกเครื่อง
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    {
-                      name: 'โลโก้ตัวอักษร "สืบศิลป์ถิ่นอักษรฯ" (PNG โปร่งใส)',
-                      url: 'images/ครูไทยวิเศษฯ-2026 (1).png',
-                      desc: 'โลโก้หลักส่วนหัวเว็บไซต์ (Hero Static Logo)',
-                      type: 'heroLogo' as const,
-                      targetKey: 'heroLogoUrl' as keyof SiteImages,
-                    },
-                    {
-                      name: 'ตรากลุ่มสาระฯ ภาษาไทย WSK',
-                      url: 'images/school_wsk_emblem_1794141246706.jpg',
-                      desc: 'โลโก้หัวเว็บ / โลโก้ท้ายเว็บ / Favicon',
-                      type: 'logo' as const,
-                      targetKey: 'headerLogoUrl' as keyof SiteImages,
-                    },
-                    {
-                      name: 'แบนเนอร์หลัก "สืบศิลป์ถิ่นอักษร"',
-                      url: 'images/hero_thai_wsk_banner_1794141245856.jpg',
-                      desc: 'ภาพแบนเนอร์โครงการภาษาไทย',
-                      type: 'hero' as const,
-                      targetKey: 'heroBackgroundUrl' as keyof SiteImages,
-                    },
-                    {
-                      name: 'ภาพคณะครูภาษาไทยวิเศษฯ ๒๕๖๙',
-                      url: 'images/thai_teacher_team_2026.png',
-                      desc: 'ภาพคุณครูในส่วนเกี่ยวกับโครงการ / ข่าวสาร',
-                      type: 'teacher' as const,
-                      targetKey: 'aboutTeacherTeamUrl' as keyof SiteImages,
-                    },
-                    {
-                      name: 'ภาพการจัดสอบและวิชาการ',
-                      url: 'images/about_academic_thai_1794141247386.jpg',
-                      desc: 'ภาพหลัก About / แบนเนอร์หน้าทำแบบทดสอบ',
-                      type: 'about' as const,
-                      targetKey: 'aboutMainImageUrl' as keyof SiteImages,
-                    },
-                    {
-                      name: 'ภาพประกวดวรรณคดีและสุนทรภู่',
-                      url: 'images/thai_literature_contest_1794141246113.jpg',
-                      desc: 'ภาพประกอบรอง About / แบนเนอร์เกียรติบัตร',
-                      type: 'contest' as const,
-                      targetKey: 'aboutSecondaryImageUrl' as keyof SiteImages,
-                    },
-                  ].map((asset, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs space-y-2.5 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="h-28 rounded-lg overflow-hidden border border-slate-100 relative group">
-                          <SmartImage
-                            src={asset.url}
-                            alt={asset.name}
-                            fallbackType={asset.type}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            containerClassName="w-full h-full"
-                          />
-                        </div>
-                        <div className="mt-2">
-                          <p className="font-['Prompt'] font-bold text-xs text-[#30283A] truncate">
-                            {asset.name}
-                          </p>
-                          <p className="text-[11px] font-['Sarabun'] text-slate-500 mt-0.5">
-                            {asset.desc}
-                          </p>
-                          <code className="text-[10px] text-slate-400 font-mono block mt-1 truncate">
-                            {asset.url}
-                          </code>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 font-['Prompt'] text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(asset.url);
-                            setCopiedAssetUrl(asset.url);
-                            setTimeout(() => setCopiedAssetUrl(null), 2500);
-                          }}
-                          className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedAssetUrl === asset.url ? (
-                            <Check className="w-3 h-3 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                          <span>{copiedAssetUrl === asset.url ? 'คัดลอกแล้ว' : 'คัดลอก'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              siteImages: {
-                                ...formData.siteImages,
-                                [asset.targetKey]: asset.url,
-                              },
-                              ...(asset.targetKey === 'aboutMainImageUrl'
-                                ? { about: { ...formData.about, imageUrl: asset.url } }
-                                : {}),
-                              ...(asset.targetKey === 'aboutSecondaryImageUrl'
-                                ? { about: { ...formData.about, secondaryImageUrl: asset.url } }
-                                : {}),
-                              ...(asset.targetKey === 'aboutTeacherTeamUrl'
-                                ? { about: { ...formData.about, teacherImageUrl: asset.url } }
-                                : {}),
-                            });
-                          }}
-                          className="px-2 py-1 rounded bg-[#7043A6]/10 hover:bg-[#7043A6] hover:text-white text-[#4B267D] font-semibold transition-colors"
-                        >
-                          <span>ใช้งานจุดนี้</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SECTION A2: DYNAMIC IMAGE & LAYOUT MANAGER */}
-              <AdminImageLayoutManager
-                items={formData.siteImageItems || DEFAULT_SITE_IMAGE_ITEMS}
-                onChange={(nextItems: ManagedSiteImage[]) => {
-                  const heroItem = nextItems.find((i) => i.id === 'img-hero-logo' || i.section === 'heroLogo');
-                  const headerItem = nextItems.find((i) => i.id === 'img-header-logo' || i.section === 'headerLogo');
-                  setFormData({
-                    ...formData,
-                    siteImageItems: nextItems,
-                    siteImages: {
-                      ...formData.siteImages,
-                      ...(heroItem ? { heroLogoUrl: heroItem.url } : {}),
-                      ...(headerItem ? { headerLogoUrl: headerItem.url } : {}),
-                    },
-                  });
-                }}
-              />
-
-              {/* SECTION B: PLACEMENT IMAGE CONTROLS WITH LIVE PREVIEW */}
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-['Prompt'] font-bold text-base text-[#4B267D] flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-[#D6AF55]" />
-                    <span>กำหนดรูปภาพแยกตามตำแหน่งที่ใช้งานบนเว็บไซต์</span>
-                  </h4>
-                  <p className="text-xs font-['Sarabun'] text-slate-500">
-                    กรอก URL รูปภาพ (สามารถใช้ภาพในระบบ หรือลิงก์จาก ImgBB, Cloudinary, Google Drive) พร้อมดูตัวอย่างจริงด้านขวา
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* 0. Hero Static Project Logo */}
-                  <div className="md:col-span-2 bg-[#FAF8FD] p-5 rounded-2xl border border-[#D6AF55]/50 space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-['Prompt'] font-bold text-sm text-[#4B267D]">
-                        ๐. โลโก้หลักส่วนหัวเว็บไซต์ (Hero Section Static Logo — ภาพนิ่ง object-contain)
-                      </span>
-                      <span className="text-[11px] font-['Prompt'] text-[#7043A6] font-semibold">
-                        แสดงเด่นบน Hero Section หน้าแรก
-                      </span>
-                    </div>
-
-                    {(!formData.siteImages?.heroLogoUrl?.trim() ||
-                      isViewerPageUrl(formData.siteImages?.heroLogoUrl)) && (
-                      <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-xs font-['Sarabun'] text-amber-950 space-y-1.5">
-                        <div className="flex items-center gap-2 font-['Prompt'] font-bold text-amber-900">
-                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span>สถานะสำหรับผู้ดูแล: ต้องการ Direct Image URL ของโลโก้โครงการ</span>
-                        </div>
-                        <p>
-                          ลิงก์ <code>https://pic.in.th/image/VSp8m6</code> เป็นหน้าเว็บดูรูปภาพที่ติดสิทธิ์เข้าสู่ระบบ (<code>pic.in.th/login</code>) จึงไม่สามารถดึงภาพโดยตรงได้ กรุณาวาง <strong>Direct Image URL จริง</strong> (เช่น <code>https://.../logo.png</code>) หรือเลือกใช้ไฟล์ภาพโลโก้ในระบบด้านล่าง
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row gap-4 items-center">
-                      <div className="w-full sm:w-56 h-32 rounded-xl border border-[#D6AF55]/50 overflow-hidden shrink-0 bg-gradient-to-br from-[#2B154A] to-[#4B267D] p-3 flex items-center justify-center">
-                        <SmartImage
-                          src={formData.siteImages?.heroLogoUrl || 'images/ครูไทยวิเศษฯ-2026 (1).png'}
-                          alt="ตัวอย่างโลโก้ Hero Section"
-                          fallbackType="heroLogo"
-                          className="w-full h-full object-contain"
-                          containerClassName="w-full h-full flex items-center justify-center"
-                        />
-                      </div>
-                      <div className="flex-1 w-full space-y-2">
-                        <input
-                          type="text"
-                          value={formData.siteImages?.heroLogoUrl || ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              siteImages: {
-                                ...formData.siteImages,
-                                heroLogoUrl: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="วาง Direct Image URL (.png/.jpg/.webp) หรือ images/ครูไทยวิเศษฯ-2026 (1).png"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs bg-white"
-                        />
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                siteImages: {
-                                  ...formData.siteImages,
-                                  heroLogoUrl: 'images/ครูไทยวิเศษฯ-2026 (1).png',
-                                },
-                              })
-                            }
-                            className="px-3 py-1.5 rounded-lg bg-[#4B267D] text-white text-[11px] font-['Prompt'] font-semibold hover:bg-[#30283A] transition-colors"
-                          >
-                            ใช้ไฟล์โลโก้ตัวอักษรทองในระบบ (ครูไทยวิเศษฯ-2026)
-                          </button>
-                          <span className="text-[11px] text-slate-500 font-['Sarabun']">
-                            แสดงผลแบบ object-fit: contain ไม่ครอบตัดรายละเอียดภาพ
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 1. Header Logo */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๑. โลโก้หัวเว็บ / แถบเมนูด้านบน (Header Logo)
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
-                        Navbar
-                      </span>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-16 h-16 rounded-full border border-[#D6AF55] overflow-hidden shrink-0 bg-white">
-                        <SmartImage
-                          src={formData.siteImages?.headerLogoUrl}
-                          alt="ตัวอย่างโลโก้"
-                          fallbackType="logo"
-                          className="w-full h-full object-cover"
-                          containerClassName="w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <input
-                          type="text"
-                          value={formData.siteImages?.headerLogoUrl || ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              siteImages: {
-                                ...formData.siteImages,
-                                headerLogoUrl: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="images/school_wsk_emblem_1794141246706.jpg"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                        />
-                        <p className="text-[11px] text-slate-500 font-['Sarabun']">
-                          แสดงในวงกลมขอบทองบนแถบเมนูด้านบนของทุกหน้า
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 2. Footer Logo */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๒. โลโก้ส่วนท้ายเว็บไซต์ (Footer Logo)
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
-                        Footer
-                      </span>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-16 h-16 rounded-full border border-[#D6AF55] overflow-hidden shrink-0 bg-[#30283A]">
-                        <SmartImage
-                          src={formData.siteImages?.footerLogoUrl || formData.siteImages?.headerLogoUrl}
-                          alt="ตัวอย่างโลโก้ Footer"
-                          fallbackType="logo"
-                          className="w-full h-full object-cover"
-                          containerClassName="w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <input
-                          type="text"
-                          value={formData.siteImages?.footerLogoUrl || ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              siteImages: {
-                                ...formData.siteImages,
-                                footerLogoUrl: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="images/school_wsk_emblem_1794141246706.jpg"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                        />
-                        <p className="text-[11px] text-slate-500 font-['Sarabun']">
-                          แสดงข้างชื่อโรงเรียนและข้อมูลติดต่อส่วนท้ายเว็บ
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3. Hero Background */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๓. ภาพพื้นหลังส่วนหัว (Hero Banner Background)
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
-                        Hero Section
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.heroBackgroundUrl}
-                        alt="Hero Background"
-                        fallbackType="hero"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.heroBackgroundUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            heroBackgroundUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/hero_thai_wsk_banner_1794141245856.jpg"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  {/* 4. Teacher Team Image */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๔. ภาพคณะครูกลุ่มสาระการเรียนรู้ภาษาไทย (Teacher Team)
-                      </span>
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-['Prompt']">
-                        About &amp; Team
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.aboutTeacherTeamUrl || formData.about?.teacherImageUrl}
-                        alt="ภาพคณะครูภาษาไทย"
-                        fallbackType="teacher"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.aboutTeacherTeamUrl || formData.about?.teacherImageUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutTeacherTeamUrl: e.target.value,
-                          },
-                          about: {
-                            ...formData.about,
-                            teacherImageUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/thai_teacher_team_2026.png"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  {/* 5. About Main Image */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๕. ภาพหลักส่วน &quot;เกี่ยวกับโครงการ&quot; (About Main)
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
-                        About
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.aboutMainImageUrl || formData.about?.imageUrl}
-                        alt="About Main"
-                        fallbackType="about"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.aboutMainImageUrl || formData.about?.imageUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutMainImageUrl: e.target.value,
-                          },
-                          about: {
-                            ...formData.about,
-                            imageUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/about_academic_thai_1794141247386.jpg"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  {/* 6. About Secondary Image */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๖. ภาพประกอบรองส่วน &quot;เกี่ยวกับโครงการ&quot; (About Secondary)
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-[#4B267D] px-2 py-0.5 rounded-full font-['Prompt']">
-                        About
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.aboutSecondaryImageUrl || formData.about?.secondaryImageUrl}
-                        alt="About Secondary"
-                        fallbackType="contest"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.aboutSecondaryImageUrl || formData.about?.secondaryImageUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutSecondaryImageUrl: e.target.value,
-                          },
-                          about: {
-                            ...formData.about,
-                            secondaryImageUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/thai_literature_contest_1794141246113.jpg"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  {/* 7. Exam Banner */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๗. แบนเนอร์หน้าระบบทำแบบทดสอบ (Exam Page Banner)
-                      </span>
-                      <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-['Prompt']">
-                        Exam
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.examBannerUrl}
-                        alt="Exam Banner"
-                        fallbackType="about"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.examBannerUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            examBannerUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/about_academic_thai_1794141247386.jpg"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  {/* 8. Certificate Banner */}
-                  <div className="bg-[#FAF8FD] p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-['Prompt'] font-bold text-xs text-[#4B267D]">
-                        ๘. แบนเนอร์หน้าเกียรติบัตร (Certificate Banner)
-                      </span>
-                      <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-['Prompt']">
-                        Certificate
-                      </span>
-                    </div>
-
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.siteImages?.certificateBannerUrl}
-                        alt="Certificate Banner"
-                        fallbackType="contest"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={formData.siteImages?.certificateBannerUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          siteImages: {
-                            ...formData.siteImages,
-                            certificateBannerUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/thai_literature_contest_1794141246113.jpg"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: HERO TEXT & LEGACY SLIDES */}
-          {activeTab === 'slides' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div>
-                  <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
-                    จัดการข้อความส่วนหัวเว็บไซต์ (Hero Section)
-                  </h3>
-                  <p className="text-xs font-['Sarabun'] text-slate-500">
-                    * ส่วนหัวเว็บไซต์แสดงโลโก้โครงการแบบภาพนิ่ง (เปลี่ยนโลโก้ได้ที่แท็บ &quot;จัดการรูปภาพทุกจุด&quot;) และใช้ข้อความหลักจากรายการลำดับที่ 1 ด้านล่าง
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddSlide}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-['Prompt'] font-semibold bg-[#FAF8FD] border border-[#7043A6]/30 text-[#4B267D] hover:bg-[#4B267D] hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>เพิ่มรายการข้อความ</span>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {(formData.heroSlides || []).map((slide, idx) => (
-                  <div key={slide.id} className="p-4 rounded-2xl border border-slate-200 bg-[#FAF8FD] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-['Prompt'] font-bold text-[#7043A6]">
-                        ภาพสไลด์ลำดับที่ {idx + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSlide(slide.id)}
-                        className="text-red-500 hover:text-red-700 p-1 rounded-lg"
-                        title="ลบสไลด์"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-['Prompt']">
-                      <div className="sm:col-span-2 flex gap-3 items-center">
-                        <div className="w-24 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0 bg-slate-900">
-                          <SmartImage
-                            src={slide.imageUrl}
-                            alt={slide.title}
-                            fallbackType="hero"
-                            className="w-full h-full object-cover"
-                            containerClassName="w-full h-full"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="block text-slate-700 font-semibold mb-1">
-                            URL ของรูปภาพสไลด์ (ImgBB / Cloudinary / หรือพาธภายใน เช่น images/...)
-                          </label>
-                          <input
-                            type="text"
-                            value={slide.imageUrl}
-                            onChange={(e) => {
-                              const updated = [...formData.heroSlides];
-                              updated[idx].imageUrl = e.target.value;
-                              setFormData({ ...formData, heroSlides: updated });
-                            }}
-                            className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-semibold mb-1">
-                          หัวข้อหลักบนสไลด์
-                        </label>
-                        <input
-                          type="text"
-                          value={slide.title}
-                          onChange={(e) => {
-                            const updated = [...formData.heroSlides];
-                            updated[idx].title = e.target.value;
-                            setFormData({ ...formData, heroSlides: updated });
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-semibold mb-1">
-                          ป้ายกำกับ (Badge)
-                        </label>
-                        <input
-                          type="text"
-                          value={slide.badge || ''}
-                          onChange={(e) => {
-                            const updated = [...formData.heroSlides];
-                            updated[idx].badge = e.target.value;
-                            setFormData({ ...formData, heroSlides: updated });
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-slate-700 font-semibold mb-1">
-                          คำอธิบายย่อย
-                        </label>
-                        <input
-                          type="text"
-                          value={slide.subtitle}
-                          onChange={(e) => {
-                            const updated = [...formData.heroSlides];
-                            updated[idx].subtitle = e.target.value;
-                            setFormData({ ...formData, heroSlides: updated });
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: ABOUT */}
+          {/* TAB 3: ABOUT (Centered Editorial Content - No Decorative Images) */}
           {activeTab === 'about' && (
             <div className="space-y-6">
               <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D] border-b pb-3">
@@ -1685,7 +902,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.about.title}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         about: { ...formData.about, title: e.target.value },
                       })
@@ -1700,7 +917,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.about.leadText}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         about: { ...formData.about, leadText: e.target.value },
                       })
@@ -1711,13 +928,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    ย่อหน้าเนื้อหา (บรรทัดละ ๑ ย่อหน้า)
+                    ย่อหน้าเนื้อหา (เว้น 1 บรรทัดว่างเพื่อขึ้นย่อหน้าใหม่)
                   </label>
                   <textarea
-                    rows={4}
-                    value={formData.about.bodyParagraphs.join('\n\n')}
+                    rows={5}
+                    value={(formData.about.bodyParagraphs || []).join('\n\n')}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         about: {
                           ...formData.about,
@@ -1729,97 +946,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <label className="block text-slate-700 font-semibold">
-                      URL รูปภาพหลัก (About Main)
-                    </label>
-                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.about.imageUrl}
-                        alt="ภาพหลัก About"
-                        fallbackType="about"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.about.imageUrl}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          about: { ...formData.about, imageUrl: e.target.value },
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutMainImageUrl: e.target.value,
-                          },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-slate-700 font-semibold">
-                      URL รูปภาพประกอบรอง (Literary)
-                    </label>
-                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.about.secondaryImageUrl}
-                        alt="ภาพประกอบ About"
-                        fallbackType="contest"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.about.secondaryImageUrl}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          about: { ...formData.about, secondaryImageUrl: e.target.value },
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutSecondaryImageUrl: e.target.value,
-                          },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-slate-700 font-semibold">
-                      URL ภาพคณะครูภาษาไทย (Team)
-                    </label>
-                    <div className="h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
-                      <SmartImage
-                        src={formData.about.teacherImageUrl || formData.siteImages?.aboutTeacherTeamUrl}
-                        alt="ภาพคณะครูภาษาไทย"
-                        fallbackType="teacher"
-                        className="w-full h-full object-cover"
-                        containerClassName="w-full h-full"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.about.teacherImageUrl || formData.siteImages?.aboutTeacherTeamUrl || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          about: { ...formData.about, teacherImageUrl: e.target.value },
-                          siteImages: {
-                            ...formData.siteImages,
-                            aboutTeacherTeamUrl: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="images/thai_teacher_team_2026.png"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    วัตถุประสงค์ของโครงการ (บรรทัดละ 1 ข้อ)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={(formData.about.objectives || []).join('\n')}
+                    onChange={(e) =>
+                      updateFormData({
+                        ...formData,
+                        about: {
+                          ...formData.about,
+                          objectives: e.target.value.split('\n').filter((p) => p.trim()),
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-['Sarabun'] text-sm"
+                  />
                 </div>
               </div>
             </div>
@@ -1862,7 +1006,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             onChange={(e) => {
                               const updated = [...formData.awardCriteria];
                               updated[idx].isActive = e.target.checked;
-                              setFormData({ ...formData, awardCriteria: updated });
+                              updateFormData({ ...formData, awardCriteria: updated });
                             }}
                             className="rounded text-[#4B267D]"
                           />
@@ -1891,7 +1035,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.awardCriteria];
                             updated[idx].title = e.target.value;
-                            setFormData({ ...formData, awardCriteria: updated });
+                            updateFormData({ ...formData, awardCriteria: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -1907,7 +1051,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.awardCriteria];
                             updated[idx].rangeText = e.target.value;
-                            setFormData({ ...formData, awardCriteria: updated });
+                            updateFormData({ ...formData, awardCriteria: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -1923,7 +1067,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.awardCriteria];
                             updated[idx].percentageText = e.target.value;
-                            setFormData({ ...formData, awardCriteria: updated });
+                            updateFormData({ ...formData, awardCriteria: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -1939,7 +1083,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.awardCriteria];
                             updated[idx].description = e.target.value;
-                            setFormData({ ...formData, awardCriteria: updated });
+                            updateFormData({ ...formData, awardCriteria: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 font-['Sarabun']"
                         />
@@ -1999,7 +1143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].topic = e.target.value;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2012,7 +1156,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].status = e.target.value as any;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"
                         >
@@ -2030,7 +1174,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].date = e.target.value;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2044,7 +1188,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].time = e.target.value;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2058,7 +1202,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].location = e.target.value;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2072,7 +1216,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.schedule];
                             updated[idx].description = e.target.value;
-                            setFormData({ ...formData, schedule: updated });
+                            updateFormData({ ...formData, schedule: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 font-['Sarabun']"
                         />
@@ -2121,7 +1265,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             onChange={(e) => {
                               const updated = [...formData.announcements];
                               updated[idx].isPinned = e.target.checked;
-                              setFormData({ ...formData, announcements: updated });
+                              updateFormData({ ...formData, announcements: updated });
                             }}
                             className="rounded text-[#4B267D]"
                           />
@@ -2134,7 +1278,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             onChange={(e) => {
                               const updated = [...formData.announcements];
                               updated[idx].isActive = e.target.checked;
-                              setFormData({ ...formData, announcements: updated });
+                              updateFormData({ ...formData, announcements: updated });
                             }}
                             className="rounded text-[#4B267D]"
                           />
@@ -2161,7 +1305,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.announcements];
                             updated[idx].title = e.target.value;
-                            setFormData({ ...formData, announcements: updated });
+                            updateFormData({ ...formData, announcements: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2175,7 +1319,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.announcements];
                             updated[idx].date = e.target.value;
-                            setFormData({ ...formData, announcements: updated });
+                            updateFormData({ ...formData, announcements: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2189,7 +1333,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.announcements];
                             updated[idx].author = e.target.value;
-                            setFormData({ ...formData, announcements: updated });
+                            updateFormData({ ...formData, announcements: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
@@ -2203,39 +1347,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.announcements];
                             updated[idx].content = e.target.value;
-                            setFormData({ ...formData, announcements: updated });
+                            updateFormData({ ...formData, announcements: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 font-['Sarabun']"
                         />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-slate-700 font-semibold mb-1">
-                          URL รูปภาพประกอบประกาศ (ระบุ images/... หรือ URL ภายนอก)
-                        </label>
-                        <div className="flex items-center gap-3">
-                          {ann.imageUrl && (
-                            <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-300 bg-slate-900 shrink-0">
-                              <SmartImage
-                                src={ann.imageUrl}
-                                alt={ann.title}
-                                fallbackType="contest"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <input
-                            type="text"
-                            value={ann.imageUrl || ''}
-                            onChange={(e) => {
-                              const updated = [...formData.announcements];
-                              updated[idx].imageUrl = e.target.value;
-                              setFormData({ ...formData, announcements: updated });
-                            }}
-                            placeholder="images/thai_literature_contest_1794141246113.jpg หรือ URL รูปภาพ"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs"
-                          />
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -2247,9 +1362,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB 7: EXAMS */}
           {activeTab === 'exams' && (
             <div className="space-y-6">
-              <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D] border-b pb-3">
-                ตั้งค่าระบบทำแบบทดสอบออนไลน์ (ม.ต้น &amp; ม.ปลาย)
-              </h3>
+              <div className="border-b pb-3">
+                <h3 className="font-['Prompt'] font-bold text-lg text-[#4B267D]">
+                  ตั้งค่าระบบทำแบบทดสอบออนไลน์ (ม.ต้น &amp; ม.ปลาย)
+                </h3>
+                <p className="text-xs font-['Sarabun'] text-slate-500 mt-1">
+                  ระบบเว็บไซต์เปิดให้นักเรียนทำแบบทดสอบได้ไม่จำกัดจำนวนครั้ง โดยไม่แสดงการจับเวลาในหน้ารายละเอียดแบบทดสอบ
+                </p>
+              </div>
+
+              {/* Admin Reminder: Google Forms Limit to 1 Response setting */}
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-['Sarabun'] space-y-1.5">
+                <div className="flex items-center gap-2 font-['Prompt'] font-bold text-amber-900">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>คำแนะนำสำหรับผู้ดูแลระบบในการตั้งค่า Google Forms</span>
+                </div>
+                <p>
+                  เนื่องจากหน้าเว็บไซต์เปิดให้เข้าทำแบบทดสอบได้ <strong>ไม่จำกัดจำนวนครั้ง</strong> กรุณาเข้าไปที่{' '}
+                  <strong>Google Forms &gt; การตั้งค่า (Settings) &gt; การตอบกลับ (Responses)</strong>{' '}
+                  แล้ว <strong>ปิดตัวเลือก &quot;จำกัดให้ตอบกลับได้เพียง 1 ครั้ง (Limit to 1 response)&quot;</strong>{' '}
+                  เพื่อให้นักเรียนสามารถทำแบบทดสอบซ้ำได้จริง
+                </p>
+              </div>
 
               <div className="space-y-6">
                 {(formData.exams || []).map((exam, idx) => (
@@ -2265,7 +1399,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.exams];
                             updated[idx].isOpen = e.target.checked;
-                            setFormData({ ...formData, exams: updated });
+                            updateFormData({ ...formData, exams: updated });
                           }}
                           className="rounded text-[#4B267D]"
                         />
@@ -2284,24 +1418,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.exams];
                             updated[idx].formUrl = e.target.value;
-                            setFormData({ ...formData, exams: updated });
+                            updateFormData({ ...formData, exams: updated });
                           }}
                           placeholder="https://docs.google.com/forms/d/..."
                           className="w-full px-3 py-2.5 rounded-lg border border-slate-300 font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-semibold mb-1">เวลาทำแบบทดสอบ (นาที)</label>
-                        <input
-                          type="number"
-                          value={exam.timeLimitMinutes}
-                          onChange={(e) => {
-                            const updated = [...formData.exams];
-                            updated[idx].timeLimitMinutes = parseInt(e.target.value, 10) || 45;
-                            setFormData({ ...formData, exams: updated });
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
                       </div>
 
@@ -2313,15 +1433,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.exams];
                             updated[idx].questionCount = parseInt(e.target.value, 10) || 20;
-                            setFormData({ ...formData, exams: updated });
+                            updateFormData({ ...formData, exams: updated });
                           }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300"
                         />
                       </div>
 
+                      <div className="flex items-end">
+                        <div className="w-full px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold">
+                          สิทธิ์การทำข้อสอบ: ไม่จำกัดจำนวนครั้ง
+                        </div>
+                      </div>
+
                       <div className="sm:col-span-2">
                         <label className="block text-slate-700 font-semibold mb-1">
-                          คำชี้แจงในการทำข้อสอบ (บรรทัดละ ๑ ข้อ)
+                          คำชี้แจงในการทำข้อสอบ (บรรทัดละ 1 ข้อ)
                         </label>
                         <textarea
                           rows={4}
@@ -2329,7 +1455,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onChange={(e) => {
                             const updated = [...formData.exams];
                             updated[idx].instructions = e.target.value.split('\n').filter((l) => l.trim());
-                            setFormData({ ...formData, exams: updated });
+                            updateFormData({ ...formData, exams: updated });
                           }}
                           className="w-full px-3 py-2.5 rounded-lg border border-slate-300 font-['Sarabun'] text-xs"
                         />
@@ -2351,13 +1477,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="space-y-4 text-xs font-['Prompt']">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    คำชี้แจงหน้าตรวจสอบคะแนน (บรรทัดละ ๑ ข้อ)
+                    คำชี้แจงหน้าตรวจสอบคะแนน (บรรทัดละ 1 ข้อ)
                   </label>
                   <textarea
                     rows={4}
                     value={formData.instructions.scoreCheck.join('\n')}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         instructions: {
                           ...formData.instructions,
@@ -2371,13 +1497,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    คำชี้แจงหน้าระบบเกียรติบัตร (บรรทัดละ ๑ ข้อ)
+                    คำชี้แจงหน้าระบบเกียรติบัตร (บรรทัดละ 1 ข้อ)
                   </label>
                   <textarea
                     rows={4}
                     value={formData.instructions.certificate.join('\n')}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         instructions: {
                           ...formData.instructions,
@@ -2406,7 +1532,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.department}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, department: e.target.value },
                       })
@@ -2421,7 +1547,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.school}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, school: e.target.value },
                       })
@@ -2436,7 +1562,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.address}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, address: e.target.value },
                       })
@@ -2451,7 +1577,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.telephone}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, telephone: e.target.value },
                       })
@@ -2466,7 +1592,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.fax}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, fax: e.target.value },
                       })
@@ -2481,7 +1607,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="email"
                     value={formData.footer.email}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, email: e.target.value },
                       })
@@ -2496,7 +1622,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="url"
                     value={formData.footer.websiteUrl}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, websiteUrl: e.target.value },
                       })
@@ -2511,7 +1637,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.developerName}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, developerName: e.target.value },
                       })
@@ -2526,7 +1652,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.developerRole}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, developerRole: e.target.value },
                       })
@@ -2541,7 +1667,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.footer.developerContact}
                     onChange={(e) =>
-                      setFormData({
+                      updateFormData({
                         ...formData,
                         footer: { ...formData.footer, developerContact: e.target.value },
                       })
@@ -2705,7 +1831,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       )}
                       <span>
                         {backendTestResult.connected
-                          ? 'ผลการทดสอบ: เชื่อมต่อสมบูรณ์ ครบทั้ง ๖ ขั้นตอน พร้อมใช้งานทุกอุปกรณ์'
+                          ? 'ผลการทดสอบ: เชื่อมต่อสมบูรณ์ ครบทั้ง 6 ขั้นตอน พร้อมใช้งานทุกอุปกรณ์'
                           : `ผลการทดสอบ: ไม่สามารถเชื่อมต่อได้ (${backendTestResult.errorType || 'ERROR'})`}
                       </span>
                     </div>
@@ -2725,27 +1851,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-['Prompt']">
                     {[
                       {
-                        title: '๑. รูปแบบ URL ถูกต้อง (/exec)',
+                        title: '1. รูปแบบ URL ถูกต้อง (/exec)',
                         passed: backendTestResult.checks.urlFormat,
                       },
                       {
-                        title: '๒. เซิร์ฟเวอร์ Web App เข้าถึงได้ (Network)',
+                        title: '2. เซิร์ฟเวอร์ Web App เข้าถึงได้ (Network)',
                         passed: backendTestResult.checks.webAppReachable,
                       },
                       {
-                        title: '๓. สิทธิ์สาธารณะ (Anyone — ไม่ติดหน้าล็อกอิน Google)',
+                        title: '3. สิทธิ์สาธารณะ (Anyone — ไม่ติดหน้าล็อกอิน Google)',
                         passed: backendTestResult.checks.anonymousAccess,
                       },
                       {
-                        title: '๔. เปิด Google Sheets ID ตรงกัน',
+                        title: '4. เปิด Google Sheets ID ตรงกัน',
                         passed: backendTestResult.checks.spreadsheetOpen,
                       },
                       {
-                        title: `๕. พบชีต "ตรวจสอบคะแนน" (${backendTestResult.data?.sheets?.scoreRows || 0} แถว)`,
+                        title: `5. พบชีต "ตรวจสอบคะแนน" (${backendTestResult.data?.sheets?.scoreRows || 0} แถว)`,
                         passed: backendTestResult.checks.scoreSheetExists,
                       },
                       {
-                        title: `๖. พบชีต "ดาวน์โหลดเกียรติบัตร" (${backendTestResult.data?.sheets?.certificateRows || 0} แถว)`,
+                        title: `6. พบชีต "ดาวน์โหลดเกียรติบัตร" (${backendTestResult.data?.sheets?.certificateRows || 0} แถว)`,
                         passed: backendTestResult.checks.certificateSheetExists,
                       },
                     ].map((item, idx) => (
@@ -2830,7 +1956,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="space-y-2 text-xs font-['Sarabun'] text-slate-600">
                   <p className="font-semibold text-slate-800 font-['Prompt']">
-                    วิธีอัปเดต URL ไปยัง GitHub Pages ใน ๓ ขั้นตอน:
+                    วิธีอัปเดต URL ไปยัง GitHub Pages ใน 3 ขั้นตอน:
                   </p>
                   <ol className="list-decimal pl-5 space-y-1.5">
                     <li>

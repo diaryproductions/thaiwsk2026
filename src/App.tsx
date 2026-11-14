@@ -30,7 +30,6 @@ export default function App() {
       }
     };
 
-    // Initial check
     if (window.location.hash) {
       handleHashChange();
     }
@@ -56,23 +55,10 @@ export default function App() {
     handleSelectTab('home');
   };
 
-  const headerLogoItem = (content.siteImageItems || []).find(
-    (img) => img.section === 'headerLogo'
-  );
-  const resolvedHeaderLogoUrl =
-    (headerLogoItem?.url && headerLogoItem.url.trim()) || content.siteImages?.headerLogoUrl;
-  const showHeaderLogo = headerLogoItem ? headerLogoItem.isVisible !== false : true;
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8FD] text-[#30283A] font-['Sarabun']">
       {/* Top Navbar */}
-      <Navbar
-        currentTab={currentTab}
-        onSelectTab={handleSelectTab}
-        isBackendConnected={isBackendConnected}
-        logoUrl={resolvedHeaderLogoUrl}
-        showLogo={showHeaderLogo}
-      />
+      <Navbar currentTab={currentTab} onSelectTab={handleSelectTab} />
 
       {/* Main Page Content */}
       <main className="flex-1">
@@ -117,10 +103,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer
-        footer={content.footer}
-        logoUrl={content.siteImages?.footerLogoUrl || content.siteImages?.headerLogoUrl}
-      />
+      <Footer footer={content.footer} />
     </div>
   );
 }

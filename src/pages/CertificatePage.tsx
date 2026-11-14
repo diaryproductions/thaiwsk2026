@@ -16,8 +16,8 @@ import { searchCertificate, CertificateSearchResult } from '../services/api';
 import { CertificateModal } from '../components/CertificateModal';
 import { SiteContent } from '../config/defaultContent';
 import { APP_CONFIG } from '../config/constants';
-import { SmartImage } from '../components/SmartImage';
 import { getMedalTheme } from '../utils/medalTheme';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface CertificatePageProps {
   content: SiteContent;
@@ -43,7 +43,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
     if (!query) return;
 
     if (query.length < 2) {
-      setErrorMessage('กรุณาระบุชื่อค้นหาอย่างน้อย ๒ ตัวอักษร');
+      setErrorMessage('กรุณาระบุชื่อค้นหาอย่างน้อย 2 ตัวอักษร');
       return;
     }
 
@@ -117,24 +117,6 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
         </p>
       </div>
 
-      {/* Decorative Banner if configured */}
-      {content.siteImages?.certificateBannerUrl && (
-        <div className="max-w-3xl mx-auto mb-6 rounded-2xl overflow-hidden shadow-xs border border-[#D6AF55]/40 h-32 sm:h-44 relative bg-slate-900">
-          <SmartImage
-            src={content.siteImages.certificateBannerUrl}
-            alt="เกียรติบัตรอิเล็กทรอนิกส์"
-            fallbackType="contest"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2B154A]/75 via-transparent to-transparent flex items-end p-4">
-            <span className="text-white font-['Prompt'] text-xs font-semibold drop-shadow-sm flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-[#F4E4B5]" />
-              โครงการส่งเสริมและพัฒนาความรู้ความสามารถด้านภาษาไทย ๒๕๖๙
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Search Input Box */}
       <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-[#D6AF55]/35 shadow-sm p-6 sm:p-8 mb-10">
         <form onSubmit={handleSearch} className="space-y-4">
@@ -170,12 +152,12 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                   className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-xs sm:text-sm font-['Prompt'] text-slate-700 bg-white focus:border-[#7043A6] outline-none"
                 >
                   <option value="">ทุกระดับชั้น</option>
-                  <option value="ม.1">มัธยมศึกษาปีที่ ๑ (ม.๑)</option>
-                  <option value="ม.2">มัธยมศึกษาปีที่ ๒ (ม.๒)</option>
-                  <option value="ม.3">มัธยมศึกษาปีที่ ๓ (ม.๓)</option>
-                  <option value="ม.4">มัธยมศึกษาปีที่ ๔ (ม.๔)</option>
-                  <option value="ม.5">มัธยมศึกษาปีที่ ๕ (ม.๕)</option>
-                  <option value="ม.6">มัธยมศึกษาปีที่ ๖ (ม.๖)</option>
+                  <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
+                  <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
+                  <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
+                  <option value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</option>
+                  <option value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</option>
+                  <option value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</option>
                 </select>
               </div>
 
@@ -245,7 +227,7 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
         {results.map((item, index) => {
           const medalTheme = getMedalTheme(item.medal);
           const hasValidLink = Boolean(item.certificateUrl && item.certificateUrl.trim());
-          const medalDisplay = (item.medal || '').trim() || '-';
+          const medalDisplay = toArabicNumerals((item.medal || '').trim()) || '-';
 
           return (
             <div
@@ -264,15 +246,15 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                       <span>เกียรติบัตรฉบับอิเล็กทรอนิกส์</span>
                     </div>
                     <h3 className="text-xl sm:text-2xl font-['Prompt'] font-bold">
-                      {item.fullName}
+                      {toArabicNumerals(item.fullName)}
                     </h3>
                   </div>
                 </div>
 
                 <div className="text-left sm:text-right text-xs font-['Prompt'] text-white/85">
                   <div>
-                    ชั้น <strong className="text-[#F4E4B5]">{item.grade || '-'}</strong>
-                    {item.room ? ` · ห้อง ${item.room}` : ''}
+                    ชั้น <strong className="text-[#F4E4B5]">{toArabicNumerals(item.grade) || '-'}</strong>
+                    {item.room ? ` · ห้อง ${toArabicNumerals(item.room)}` : ''}
                   </div>
                 </div>
               </div>
@@ -323,21 +305,21 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">เลขที่ (ลำดับ)</div>
                     <div className="text-base sm:text-lg font-bold text-[#30283A] mt-1 tabular-nums">
-                      {item.number || '-'}
+                      {toArabicNumerals(item.number) || '-'}
                     </div>
                   </div>
 
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">ระดับชั้น</div>
                     <div className="text-base sm:text-lg font-bold text-[#4B267D] mt-1">
-                      {item.grade || '-'}
+                      {toArabicNumerals(item.grade) || '-'}
                     </div>
                   </div>
 
                   <div className="bg-[#FAF8FD] p-3.5 rounded-xl border border-slate-200/70">
                     <div className="text-xs text-slate-500">ห้องเรียน</div>
                     <div className="text-base sm:text-lg font-bold text-[#4B267D] mt-1 tabular-nums">
-                      {item.room ? `ห้อง ${item.room}` : '-'}
+                      {item.room ? `ห้อง ${toArabicNumerals(item.room)}` : '-'}
                     </div>
                   </div>
                 </div>
@@ -390,17 +372,27 @@ export const CertificatePage: React.FC<CertificatePageProps> = ({
             <span>คำแนะนำในการดาวน์โหลดเกียรติบัตร</span>
           </h4>
           <ul className="space-y-1.5 text-xs text-slate-600">
-            {content.instructions.certificate.map((inst, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-[#D6AF55] font-bold">•</span>
-                <span>{inst}</span>
-              </li>
-            ))}
+            {content.instructions.certificate
+              .filter(
+                (inst) =>
+                  !inst.includes('ครูแบงค์') &&
+                  !inst.includes('กรุณาติดต่อครูผู้รับผิดชอบระบบ')
+              )
+              .map((inst, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-[#D6AF55] font-bold">•</span>
+                  <span>{toArabicNumerals(inst)}</span>
+                </li>
+              ))}
             <li className="flex items-start gap-2">
               <span className="text-[#D6AF55] font-bold">•</span>
               <span>
                 ระดับเหรียญจะอ่านจากชีต &quot;{APP_CONFIG.CERTIFICATE_SHEET}&quot; คอลัมน์ E โดยตรง ไม่มีการคำนวณแปลงค่าใหม่
               </span>
+            </li>
+            <li className="flex items-start gap-2 font-medium text-[#4B267D]">
+              <span className="text-[#D6AF55] font-bold">•</span>
+              <span>{APP_CONFIG.ADMIN_CONTACT_NOTICE}</span>
             </li>
           </ul>
         </div>

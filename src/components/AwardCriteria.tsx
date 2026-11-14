@@ -2,6 +2,7 @@ import React from 'react';
 import { Award, ShieldCheck } from 'lucide-react';
 import { AwardCriterion } from '../config/defaultContent';
 import { ThaiOrnament } from './ThaiOrnament';
+import { toArabicNumerals } from '../utils/thaiDigits';
 
 interface AwardCriteriaProps {
   criteria: AwardCriterion[];
@@ -88,20 +89,20 @@ export const AwardCriteria: React.FC<AwardCriteriaProps> = ({ criteria }) => {
                       <Award className={`w-5 h-5 ${style.iconColor}`} />
                     </div>
                     <span className={`text-xs font-['Prompt'] font-semibold px-2.5 py-0.5 rounded-full border ${style.badgeBg}`}>
-                      {item.percentageText}
+                      {toArabicNumerals(item.percentageText)}
                     </span>
                   </div>
 
                   <h3 className="font-['Prompt'] font-bold text-lg text-[#30283A]">
-                    {item.title}
+                    {toArabicNumerals(item.title)}
                   </h3>
 
                   <div className="mt-2 text-sm font-['Prompt'] font-semibold text-[#4B267D]">
-                    {item.rangeText}
+                    {toArabicNumerals(item.rangeText)}
                   </div>
 
                   <p className="mt-2.5 text-xs font-['Sarabun'] text-slate-600 leading-relaxed">
-                    {item.description}
+                    {toArabicNumerals(item.description)}
                   </p>
                 </div>
 
