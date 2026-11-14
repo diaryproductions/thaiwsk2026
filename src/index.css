@@ -1,80 +1,66 @@
 @import "tailwindcss";
 
-/* 1. นำเข้าไฟล์ฟอนต์ LINE Seed Sans TH */
+/* 1. นำเข้าไฟล์ฟอนต์ LINE Seed Sans TH ทั้ง 5 น้ำหนัก */
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Th.ttf') format('truetype');
+  src: url('./assets/fonts/LINESeedSansTH_A_Th.ttf') format('truetype');
   font-weight: 300;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Rg.ttf') format('truetype');
+  src: url('./assets/fonts/LINESeedSansTH_A_Rg.ttf') format('truetype');
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_Bd.ttf') format('truetype');
+  src: url('./assets/fonts/LINESeedSansTH_A_Bd.ttf') format('truetype');
   font-weight: 700;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_XBd.ttf') format('truetype');
+  src: url('./assets/fonts/LINESeedSansTH_A_XBd.ttf') format('truetype');
   font-weight: 800;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'LINE Seed Sans TH';
-  src: url('/thaiwsk2026/fonts/LINESeedSansTH_A_He.ttf') format('truetype');
+  src: url('./assets/fonts/LINESeedSansTH_A_He.ttf') format('truetype');
   font-weight: 900;
   font-display: swap;
 }
 
-/* 2. ตั้งค่าฟอนต์เริ่มต้นของเว็บไซต์ */
+/* 2. บังคับเปลี่ยนฟอนต์หลักและทุกองค์ประกอบในเว็บให้เป็น LINE Seed ทันที */
 @layer base {
+  *, ::before, ::after {
+    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+  
   body {
-    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'LINE Seed Sans TH', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 }
 
-/* 3. คลาสเสริมสำหรับฟอนต์ */
-.font-prompt {
-  font-family: 'LINE Seed Sans TH', sans-serif;
-}
-
-.font-sarabun {
-  font-family: 'LINE Seed Sans TH', sans-serif;
-}
-
+/* คงฟอนต์ Cinzel ไว้เฉพาะตัวอักษรภาษาอังกฤษพิเศษถ้ามี */
 .font-cinzel {
-  font-family: 'Cinzel', serif;
+  font-family: 'Cinzel', serif !important;
 }
 
-/* 4. อนิเมชันและการแสดงผล (Animations & Reveals) */
+/* 3. อニメชันและการแสดงผล (Animations & Reveals) */
 @keyframes wskFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes wskFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-wsk-fade-in {
@@ -85,17 +71,9 @@
   animation: wskFadeUp 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.animate-wsk-delay-1 {
-  animation-delay: 80ms;
-}
-
-.animate-wsk-delay-2 {
-  animation-delay: 160ms;
-}
-
-.animate-wsk-delay-3 {
-  animation-delay: 240ms;
-}
+.animate-wsk-delay-1 { animation-delay: 80ms; }
+.animate-wsk-delay-2 { animation-delay: 160ms; }
+.animate-wsk-delay-3 { animation-delay: 240ms; }
 
 .reveal-base {
   opacity: 0;
@@ -119,7 +97,6 @@
     opacity: 1 !important;
     transform: none !important;
   }
-
   .reveal-base,
   .reveal-visible {
     opacity: 1 !important;
@@ -128,18 +105,14 @@
   }
 }
 
-/* 5. ตั้งค่าสำหรับการพิมพ์ (Print Style) */
+/* 4. ตั้งค่าสำหรับการพิมพ์ */
 @media print {
   body {
     background: white !important;
     color: black !important;
   }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
   @page {
     size: A4 landscape;
     margin: 0;
